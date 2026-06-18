@@ -107,12 +107,28 @@ def score_resume(resume_text: str, jd_text: str) -> int:
     prompt = f"""You are a strict ATS system. Score this resume against the job description from 0 to 100.
 
 Scoring criteria:
-- Required skills present: 50 points
-- Relevant project/work experience: 30 points  
-- Education and certifications: 10 points
-- Summary alignment: 10 points
+- Completely unrelated domain (e.g. engineer applying for restaurant job): score 0-15, ignore all other criteria
+- Required skills present (exact matches): 40 points
+- Relevant project/work experience depth: 25 points
+- Education match (exact degree = full, related = half, unrelated = 0): 10 points
+- Summary alignment to JD: 5 points
+- Certifications relevant to JD: 5 points
+- Seniority/experience level match: 10 points
+- Years of experience meets JD requirement: 5 points
 
-Be strict. Do not inflate scores. A fresher with projects but no work experience in the domain should score 55-70.
+Score bands — you must stay within these:
+- 0-15:  Completely wrong domain
+- 16-35: Wrong field, minor transferable skills only
+- 36-50: Related field but major skill gaps
+- 51-65: Partial match, missing key requirements
+- 66-79: Good match, minor gaps
+- 80-89: Strong match, nearly all requirements met
+- 90-100: Near-perfect match, exceeds requirements
+
+Rules:
+- A fresher cannot score above 65 even with strong projects
+- Do not inflate. A 90+ should be rare
+- Wrong domain must never exceed 15
 
 JOB DESCRIPTION:
 {jd_text[:JD_CHAR_LIMIT]}
@@ -139,7 +155,8 @@ def tailor_resume(resume_text: str, jd_text: str, missing_keywords: list[str], p
     Rewrite resume against JD using a locked output template.
     Hard constraints prevent hallucination and apologetic framing.
     """
-    missing_str = ", ".join(present_keywords[:15]) if present_keywords else "none"
+    present_str = ", ".join(present_keywords[:15]) if present_keywords else "none"
+    missing_str = ", ".join(missing_keywords[:15]) if missing_keywords else "none"
 
 
     prompt = f"""You are a professional resume editor. Rewrite the candidate's resume to better match the job description.
@@ -153,8 +170,8 @@ HARD RULES — violating any of these makes the output invalid:
 6. Only reword existing bullets to naturally emphasize relevant skills — do not add new bullet points
 7. The summary must be rewritten to target this JD, but every claim must be verifiable from the original resume
 
-KEYWORDS TO NATURALLY EMPHASIZE (only if already present in resume):
-{missing_str}
+KEYWORDS TO EMPHASIZE (already in resume): {present_str}
+KEYWORDS TO NOT INVENT (not in resume): {missing_str}
 
 OUTPUT FORMAT — use this exact structure, no deviations:
 [CANDIDATE NAME] | [EMAIL] | [PHONE] | [LOCATION]

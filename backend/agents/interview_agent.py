@@ -1,5 +1,5 @@
 from typing import List
-from backend.agents.llm import call_cerebras
+from backend.agents.llm import call_cerebras, call_cerebras_json
 PHASE_ORDER = ["intro", "background", "technical", "behavioral", "hr", "closing"]
 PHASE_TIME_SHARE = {
     "intro": 0.05, "background": 0.20, "technical": 0.35,
@@ -149,7 +149,7 @@ Return ONLY valid JSON. Be honest - base scores on actual transcript, not assump
 }}"""
 
     try:
-        return call_cerebras(prompt)
+        return call_cerebras_json(prompt)
     except Exception:
         return {
             "overall_score": 0, "technical_score": 0,
