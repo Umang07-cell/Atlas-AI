@@ -51,5 +51,6 @@ def _migrate_interview_sessions():
 
 def init_db():
     from backend.models import user, resume, job, application, chat  # noqa
+    from backend.models import analytics  # noqa — UserEvent, BugReport, LoginAttempt, PasswordResetToken
     Base.metadata.create_all(bind=engine)
     _migrate_interview_sessions()

@@ -20,9 +20,9 @@ class ProfileCreate(BaseModel):
     name: str
     email: Optional[str] = ""
     skills: Optional[List[str]] = []
-    domain: Optional[str] = "Data Analytics"
+    domain: str          # no default
     location: Optional[str] = "India"
-    experience_level: Optional[str] = "fresher"
+    experience_level: str  # no default
 
 
 class ProfileUpdate(BaseModel):
