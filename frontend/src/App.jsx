@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
+import Landing from './pages/Landing'
 import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
 import ForgotPasswordPage from './pages/ForgotPasswordPage'
@@ -38,6 +39,9 @@ export default function App() {
     <BrowserRouter>
       <PageTracker />
       <Routes>
+        {/* Landing — smart redirect (inside Landing itself) */}
+        <Route path="/"               element={<Landing />} />
+
         {/* Public auth routes */}
         <Route path="/login"           element={<LoginPage />} />
         <Route path="/signup"          element={<SignupPage />} />
@@ -48,16 +52,16 @@ export default function App() {
 
         {/* Protected app */}
         <Route path="/" element={<RequireAuth><Layout /></RequireAuth>}>
-          <Route index                 element={<Navigate to="/dashboard" replace />} />
-          <Route path="dashboard"      element={<Dashboard />} />
-          <Route path="jobs"           element={<JobFeed />} />
-          <Route path="resume"         element={<ResumeStudio />} />
-          <Route path="interview"      element={<InterviewPrep />} />
-          <Route path="chat"           element={<ChatPage />} />
-          <Route path="voice"          element={<VoiceMode />} />
+          <Route path="dashboard"  element={<Dashboard />} />
+          <Route path="jobs"       element={<JobFeed />} />
+          <Route path="resume"     element={<ResumeStudio />} />
+          <Route path="interview"  element={<InterviewPrep />} />
+          <Route path="chat"       element={<ChatPage />} />
+          <Route path="voice"      element={<VoiceMode />} />
         </Route>
 
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        {/* Unknown routes → landing */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   )
