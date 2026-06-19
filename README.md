@@ -300,7 +300,7 @@ def _parse_json(raw):
 
 **Umang Pawar**  
 Data Analytics · AI/ML Engineering · G.H. Raisoni College  
-[LinkedIn](https://linkedin.com/in/yourprofile) · [GitHub](https://github.com/yourusername)
+[LinkedIn](https://www.linkedin.com/in/umang-pawar-208157314) · [GitHub](https://github.com/Umang07)
 
 ---
 
