@@ -13,7 +13,9 @@
   --border-hi:   rgba(255,255,255,0.15);
   --accent:      #6366f1;
   --accent-2:    #8b5cf6;
+  --accent-blue: #7eb8ff;
   --glow:        rgba(99,102,241,0.25);
+  --glow-blue:   rgba(100,180,255,0.18);
   --text:        #e2e8f0;
   --text-dim:    #94a3b8;
   --text-muted:  #475569;
@@ -61,7 +63,7 @@
     transform: translateY(-1px);
   }
 
-  /* Card system — multiple variants */
+  /* Card system */
   .card {
     border-radius: 14px;
     padding: 20px;
@@ -87,13 +89,11 @@
     transform: translateY(-2px);
     box-shadow: 0 12px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(99,102,241,0.12);
   }
-  /* Elevated card with deeper shadow */
   .card-elevated {
     @apply card;
     background: var(--surface);
     box-shadow: 0 8px 32px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.05);
   }
-  /* Accent bordered card */
   .card-accent {
     @apply card;
     border-color: rgba(99,102,241,0.25);
@@ -124,7 +124,6 @@
     background: rgba(255,255,255,0.08);
     border-color: rgba(255,255,255,0.15);
   }
-  /* Square minimal button (V1-style) */
   .btn-mono {
     @apply btn;
     border-radius: 4px;
@@ -149,9 +148,9 @@
     border: 1px solid rgba(255,255,255,0.08);
   }
   .input:focus {
-    border-color: rgba(99,102,241,0.5);
-    background: rgba(99,102,241,0.05);
-    box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
+    border-color: rgba(100,180,255,0.4);
+    background: rgba(100,180,255,0.04);
+    box-shadow: 0 0 0 3px rgba(100,180,255,0.08);
   }
 
   /* Badges */
@@ -161,7 +160,6 @@
   .badge-blue   { @apply badge bg-blue-500/15 text-blue-300 border border-blue-500/20; }
   .badge-orange { @apply badge bg-orange-500/15 text-orange-300 border border-orange-500/20; }
   .badge-red    { @apply badge bg-red-500/15 text-red-300 border border-red-500/20; }
-  /* V1-style mono badge */
   .badge-mono {
     font-family: var(--font-mono);
     font-size: 9px;
@@ -197,17 +195,23 @@
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
+  .glow-text-blue {
+    background: linear-gradient(135deg, #8ae8ff, #aac4ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
   .text-glow {
     text-shadow: 0 0 18px rgba(255,255,255,0.25);
   }
 
-  /* Divider with gradient */
+  /* Divider */
   .divider-glow {
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.10), transparent);
   }
 
-  /* Gradient border (accent-bordered container) */
+  /* Gradient border */
   .gradient-border {
     position: relative;
     border-radius: 14px;
@@ -266,11 +270,20 @@
   from { opacity: 0; transform: translateY(14px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes vortexPulse {
+  0%, 100% { opacity: 0.85; }
+  50%       { opacity: 1; }
+}
 
 .animate-fade-in   { animation: fadeIn  0.35s ease forwards; }
 .animate-slide-in  { animation: slideIn 0.28s ease forwards; }
 .animate-float     { animation: float   4s ease-in-out infinite; }
 .animate-float-alt { animation: floatAlt 5s ease-in-out infinite; }
+.animate-spin      { animation: spin 0.75s linear infinite; }
 
 .skeleton {
   background: linear-gradient(90deg,
@@ -282,7 +295,7 @@
   border-radius: 10px;
 }
 
-/* Staggered children  */
+/* Staggered children */
 .stagger > *:nth-child(1) { animation: staggerIn 0.4s 0.05s ease both; }
 .stagger > *:nth-child(2) { animation: staggerIn 0.4s 0.12s ease both; }
 .stagger > *:nth-child(3) { animation: staggerIn 0.4s 0.19s ease both; }
