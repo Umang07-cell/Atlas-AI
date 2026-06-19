@@ -81,6 +81,8 @@ def get_interview_response(
 
     if len(messages) == 0:
         task = f'Open the interview. Say: "Hi {candidate_name}, I\'m Priya. We\'ll keep this conversational - background first, then technical. But first, how are you doing today?" Under 35 words. Warm and direct.'
+    elif phase == "complete":
+        task = "The interview is now complete. React to their last statement briefly, thank them for their time, and say goodbye warmly. Do NOT ask any questions. Under 30 words."
     else:
         task = f"React to their last answer in 1 sentence, then ask your next question.\nPacing: {pacing}\nFollow-up hints: {hints}"
 
