@@ -72,7 +72,7 @@ def _user_answers_in_phase(messages: List[dict], phase: str) -> int:
 
 
 def _should_advance_phase(session, messages: List[dict], phase: str, remaining: int) -> bool:
-    if phase in ("closing", "complete"):
+    if phase == "complete":
         return False
 
     # Force close when nearly out of time
@@ -119,10 +119,15 @@ def process_interview_turn(
     is_complete = False
     feedback = None
 
-    if should_close or (advance and phase == "hr"):
-        response_phase = "closing"
+    if phase == "closing":
+        # The user just answered the closing question. Time to complete.
+        response_phase = "complete"
         next_phase = "complete"
         is_complete = True
+    elif should_close or (advance and phase == "hr"):
+        # Enter closing phase naturally
+        response_phase = "closing"
+        next_phase = "closing"
     elif advance:
         idx = _phase_index(phase)
         if idx < len(PHASE_ORDER) - 1:
