@@ -156,8 +156,16 @@ const exitFullscreen = () => {
       setMessages(prev => [...prev, { role: 'assistant', content: data.message }])
       setPhase(data.phase)
       if (data.remaining_seconds != null) setRemaining(data.remaining_seconds)
-      if (data.is_complete) { setGenFB(true); setFeedback(data.feedback); exitFullscreen(); setStage('complete'); setGenFB(false) }
-      else return data.message
+      if (data.is_complete) {
+        setGenFB(true); 
+        setFeedback(data.feedback); 
+        exitFullscreen(); 
+        setGenFB(false);
+        if (data.message) await speakRef.current(data.message);
+        setStage('complete');
+        return null;
+      }
+      return data.message
     } catch (err) { alert(err.response?.data?.detail || 'Error sending answer') }
     finally { setLoading(false) }
     return null
