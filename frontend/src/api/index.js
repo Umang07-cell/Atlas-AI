@@ -4,8 +4,7 @@
 
 import axios from 'axios'
 
-const BASE = import.meta.env.VITE_API_URL || '/api/v1'
-
+const BASE = 'https://atlas-backend-vak7.onrender.com/api/v1'
 const api = axios.create({ baseURL: BASE })
 
 // Auth interceptor — attach token + API key on every request
