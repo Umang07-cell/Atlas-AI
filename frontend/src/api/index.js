@@ -5,6 +5,7 @@
 import axios from 'axios'
 
 const BASE = 'https://atlas-backend-vak7.onrender.com/api/v1'
+
 const api = axios.create({ baseURL: BASE })
 
 // Auth interceptor — attach token + API key on every request
