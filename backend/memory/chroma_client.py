@@ -1,5 +1,4 @@
 # chroma_client.py — ChromaDB removed, replaced with SQLite-based vector store
-# Same function signatures, drop-in replacement
 
 import os
 import json
@@ -45,6 +44,17 @@ class SimpleCollection:
             ))
         conn.commit()
         conn.close()
+
+    def upsert(self, ids, embeddings, documents=None, metadatas=None):
+        self.add(ids, embeddings, documents, metadatas)
+
+    def count(self):
+        conn = _get_conn()
+        row = conn.execute(
+            "SELECT COUNT(*) FROM vectors WHERE collection=?", (self.name,)
+        ).fetchone()
+        conn.close()
+        return row[0]
 
     def query(self, query_embeddings, n_results=5, **kwargs):
         import numpy as np
