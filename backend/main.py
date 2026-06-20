@@ -12,26 +12,48 @@ from slowapi.errors import RateLimitExceeded
 
 from backend.config import FRONTEND_URL
 from backend.database import init_db
-from backend.routers import profile, jobs, resume, interview, chat, voice
-from backend.routers import auth, analytics
 from backend.utils.api_key import verify_api_key
 from backend.utils.rate_limit import limiter
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    logger.info("[Main] Starting up...")
+
     os.makedirs("data", exist_ok=True)
     os.makedirs("tmp", exist_ok=True)
+
+    logger.info("[Main] Initialising database...")
     init_db()
+    logger.info("[Main] Database ready.")
+
+    logger.info("[Main] Loading routers...")
+    from backend.routers import auth, analytics
+    from backend.routers import profile, jobs, resume, interview, chat, voice
+    logger.info("[Main] Routers loaded.")
+
+    PREFIX = "/api/v1"
+
+    app.include_router(auth.router, prefix=PREFIX)
+    app.include_router(analytics.router, prefix=PREFIX, dependencies=[Depends(verify_api_key)])
+    app.include_router(profile.router, prefix=PREFIX, dependencies=[Depends(verify_api_key)])
+    app.include_router(jobs.router, prefix=PREFIX, dependencies=[Depends(verify_api_key)])
+    app.include_router(resume.router, prefix=PREFIX, dependencies=[Depends(verify_api_key)])
+    app.include_router(interview.router, prefix=PREFIX, dependencies=[Depends(verify_api_key)])
+    app.include_router(chat.router, prefix=PREFIX, dependencies=[Depends(verify_api_key)])
+    app.include_router(voice.router, prefix=PREFIX, dependencies=[Depends(verify_api_key)])
 
     try:
         from backend.scheduler.job_scheduler import start_scheduler
         start_scheduler()
+        logger.info("[Main] Scheduler started.")
     except Exception as e:
         logger.error(f"[Main] Scheduler failed to start: {e}")
 
+    logger.info("[Main] Startup complete — app is ready.")
     yield
 
+    logger.info("[Main] Shutting down...")
     try:
         from backend.scheduler.job_scheduler import stop_scheduler
         stop_scheduler()
@@ -58,20 +80,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-PREFIX = "/api/v1"
-
-# Auth & analytics — no API key required (have their own security)
-app.include_router(auth.router, prefix=PREFIX)
-app.include_router(analytics.router, prefix=PREFIX, dependencies=[Depends(verify_api_key)])
-
-# Protected routes — require API key
-app.include_router(profile.router, prefix=PREFIX, dependencies=[Depends(verify_api_key)])
-app.include_router(jobs.router, prefix=PREFIX, dependencies=[Depends(verify_api_key)])
-app.include_router(resume.router, prefix=PREFIX, dependencies=[Depends(verify_api_key)])
-app.include_router(interview.router, prefix=PREFIX, dependencies=[Depends(verify_api_key)])
-app.include_router(chat.router, prefix=PREFIX, dependencies=[Depends(verify_api_key)])
-app.include_router(voice.router, prefix=PREFIX, dependencies=[Depends(verify_api_key)])
 
 
 @app.get("/")
