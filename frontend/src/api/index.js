@@ -3,6 +3,8 @@
  */
 
 import axios from 'axios'
+console.log('API KEY:', import.meta.env.VITE_API_KEY)
+console.log('BASE URL:', import.meta.env.VITE_API_URL)
 
 const BASE = 'https://atlas-backend-vak7.onrender.com/api/v1'
 
