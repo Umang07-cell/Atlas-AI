@@ -3,6 +3,12 @@
  * Lightweight CSS/SVG only. No canvas, no WebGL.
  * Matches the vortex color palette (deep blue/cyan/indigo).
  */
+const StarIcon = ({ style, color, size }) => (
+  <svg style={{ ...style, width: size, height: size }} viewBox="0 0 512 512" fill={color} xmlns="http://www.w3.org/2000/svg">
+    <path d="M256 0C256 0 256 220 512 256C256 292 256 512 256 512C256 512 256 292 0 256C256 220 256 0 256 0Z" />
+  </svg>
+)
+
 export default function OrbBackground() {
   return (
     <div
@@ -16,7 +22,7 @@ export default function OrbBackground() {
         position: 'absolute', top: '-15%', left: '50%', transform: 'translateX(-50%)',
         width: '70vw', height: '50vw', maxWidth: 700, maxHeight: 500,
         borderRadius: '50%',
-        background: 'radial-gradient(ellipse, rgba(80,160,255,0.07) 0%, rgba(50,100,220,0.04) 45%, transparent 70%)',
+        background: 'radial-gradient(ellipse, rgba(80,160,255,0.3) 0%, rgba(50,100,220,0.2) 45%, transparent 70%)',
         filter: 'blur(80px)',
         animation: 'ambientPulse 14s ease-in-out infinite',
       }} />
@@ -26,7 +32,7 @@ export default function OrbBackground() {
         position: 'absolute', bottom: '10%', left: '-10%',
         width: '55vw', height: '55vw', maxWidth: 580, maxHeight: 580,
         borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(99,102,241,0.055) 0%, transparent 65%)',
+        background: 'radial-gradient(circle, rgba(99,102,241,0.25) 0%, transparent 65%)',
         filter: 'blur(90px)',
         animation: 'ambientPulse 18s ease-in-out infinite reverse',
       }} />
@@ -36,81 +42,33 @@ export default function OrbBackground() {
         position: 'absolute', top: '20%', right: '-8%',
         width: '40vw', height: '40vw', maxWidth: 440, maxHeight: 440,
         borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(139,92,246,0.045) 0%, transparent 65%)',
+        background: 'radial-gradient(circle, rgba(139,92,246,0.2) 0%, transparent 65%)',
         filter: 'blur(70px)',
         animation: 'ambientPulse 22s ease-in-out infinite 3s',
       }} />
 
-      {/* ── Layer 2: Orbital ring SVG ──────────────────────────────── */}
-      <svg
-        className="absolute top-1/2 left-1/2"
-        style={{
-          width: '80vw', height: '80vw',
-          maxWidth: 820, maxHeight: 820,
-          transform: 'translate(-50%, -52%)',
-          opacity: 0.18,
-        }}
-        viewBox="0 0 800 800"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <defs>
-          <linearGradient id="orbit-g1" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%"   stopColor="#7eb8ff" stopOpacity="0" />
-            <stop offset="40%"  stopColor="#7eb8ff" stopOpacity="0.5" />
-            <stop offset="100%" stopColor="#7eb8ff" stopOpacity="0" />
-          </linearGradient>
-          <linearGradient id="orbit-g2" x1="100%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%"   stopColor="#6366f1" stopOpacity="0" />
-            <stop offset="50%"  stopColor="#6366f1" stopOpacity="0.4" />
-            <stop offset="100%" stopColor="#6366f1" stopOpacity="0" />
-          </linearGradient>
-          <linearGradient id="orbit-g3" x1="0%" y1="100%" x2="100%" y2="0%">
-            <stop offset="0%"   stopColor="#8b5cf6" stopOpacity="0" />
-            <stop offset="50%"  stopColor="#8b5cf6" stopOpacity="0.3" />
-            <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0" />
-          </linearGradient>
-        </defs>
-
-        {/* Outer ellipse — dashed gradient, slow spin */}
-        <ellipse cx="400" cy="400" rx="375" ry="172"
-          stroke="url(#orbit-g1)" strokeWidth="1"
-          strokeDasharray="6 8"
-          transform="rotate(-20 400 400)"
-          style={{ animation: 'orbSpin 100s linear infinite', transformOrigin: '400px 400px' }} />
-
-        {/* Outer solid faint ring */}
-        <ellipse cx="400" cy="400" rx="375" ry="172"
-          stroke="rgba(120,190,255,0.04)" strokeWidth="0.8"
-          transform="rotate(-20 400 400)" />
-
-        {/* Inner circle */}
-        <ellipse cx="400" cy="400" rx="320" ry="320"
-          stroke="rgba(255,255,255,0.022)" strokeWidth="1" />
-
-        {/* Accent indigo ellipse — counter-rotating */}
-        <ellipse cx="400" cy="400" rx="255" ry="108"
-          stroke="url(#orbit-g2)" strokeWidth="0.9"
-          strokeDasharray="4 10"
-          transform="rotate(52 400 400)"
-          style={{ animation: 'orbSpinReverse 75s linear infinite', transformOrigin: '400px 400px' }} />
-
-        {/* Small inner ring — purple */}
-        <ellipse cx="400" cy="400" rx="180" ry="75"
-          stroke="url(#orbit-g3)" strokeWidth="0.7"
-          strokeDasharray="3 12"
-          transform="rotate(15 400 400)"
-          style={{ animation: 'orbSpin 55s linear infinite', transformOrigin: '400px 400px' }} />
-      </svg>
-
-      {/* ── Layer 3: Fine particle dots ───────────────────────────── */}
-      <div style={{ position: 'absolute', top: '14%', left: '18%',  width: 2.5, height: 2.5, borderRadius: '50%', background: 'rgba(140,200,255,0.35)', animation: 'ambientPulse 4s ease-in-out infinite' }} />
-      <div style={{ position: 'absolute', top: '38%', right: '16%', width: 2,   height: 2,   borderRadius: '50%', background: 'rgba(139,92,246,0.55)',  animation: 'ambientPulse 3.2s ease-in-out infinite 0.8s' }} />
-      <div style={{ position: 'absolute', top: '66%', left: '52%',  width: 2,   height: 2,   borderRadius: '50%', background: 'rgba(120,190,255,0.28)', animation: 'ambientPulse 6s ease-in-out infinite 1.5s' }} />
-      <div style={{ position: 'absolute', top: '12%', right: '32%', width: 1.5, height: 1.5, borderRadius: '50%', background: 'rgba(99,102,241,0.5)',   animation: 'ambientPulse 5s ease-in-out infinite 2s' }} />
-      <div style={{ position: 'absolute', bottom: '18%', left: '32%', width: 3, height: 3,  borderRadius: '50%', background: 'rgba(255,255,255,0.12)', animation: 'ambientPulse 7.5s ease-in-out infinite 0.5s' }} />
-      <div style={{ position: 'absolute', top: '55%', left: '8%',   width: 1.5, height: 1.5, borderRadius: '50%', background: 'rgba(100,180,255,0.3)',  animation: 'ambientPulse 4.5s ease-in-out infinite 1s' }} />
-      <div style={{ position: 'absolute', top: '78%', right: '22%', width: 2,   height: 2,   borderRadius: '50%', background: 'rgba(139,92,246,0.3)',   animation: 'ambientPulse 8s ease-in-out infinite 2.5s' }} />
+      {/* ── Layer 2: Dense Starfield ───────────────────────────── */}
+      <StarIcon size={14} color="rgba(140,200,255,0.8)" style={{ position: 'absolute', top: '10%', left: '15%', animation: 'ambientPulse 4s ease-in-out infinite' }} />
+      <StarIcon size={8}  color="rgba(139,92,246,0.9)" style={{ position: 'absolute', top: '25%', right: '20%', animation: 'ambientPulse 3.2s ease-in-out infinite 0.8s' }} />
+      <StarIcon size={12} color="rgba(120,190,255,0.7)" style={{ position: 'absolute', top: '60%', left: '45%', animation: 'ambientPulse 6s ease-in-out infinite 1.5s' }} />
+      <StarIcon size={6}  color="rgba(99,102,241,0.9)" style={{ position: 'absolute', top: '15%', right: '35%', animation: 'ambientPulse 5s ease-in-out infinite 2s' }} />
+      <StarIcon size={16} color="rgba(255,255,255,0.5)" style={{ position: 'absolute', bottom: '20%', left: '25%', animation: 'ambientPulse 7.5s ease-in-out infinite 0.5s' }} />
+      <StarIcon size={7}  color="rgba(100,180,255,0.8)" style={{ position: 'absolute', top: '50%', left: '12%', animation: 'ambientPulse 4.5s ease-in-out infinite 1s' }} />
+      <StarIcon size={10} color="rgba(139,92,246,0.8)" style={{ position: 'absolute', top: '80%', right: '15%', animation: 'ambientPulse 8s ease-in-out infinite 2.5s' }} />
+      
+      <StarIcon size={5}  color="rgba(200,220,255,0.6)" style={{ position: 'absolute', top: '5%', left: '40%', animation: 'ambientPulse 5.5s ease-in-out infinite 1.2s' }} />
+      <StarIcon size={9}  color="rgba(255,255,255,0.7)" style={{ position: 'absolute', bottom: '10%', right: '40%', animation: 'ambientPulse 3.8s ease-in-out infinite 0.3s' }} />
+      <StarIcon size={11} color="rgba(180,200,255,0.8)" style={{ position: 'absolute', top: '35%', left: '5%', animation: 'ambientPulse 6.2s ease-in-out infinite 2.1s' }} />
+      <StarIcon size={6}  color="rgba(160,180,255,0.9)" style={{ position: 'absolute', top: '70%', right: '5%', animation: 'ambientPulse 4.1s ease-in-out infinite 0.7s' }} />
+      <StarIcon size={13} color="rgba(220,230,255,0.5)" style={{ position: 'absolute', top: '45%', right: '45%', animation: 'ambientPulse 7.1s ease-in-out infinite 1.8s' }} />
+      <StarIcon size={8}  color="rgba(150,150,255,0.7)" style={{ position: 'absolute', bottom: '30%', left: '60%', animation: 'ambientPulse 5.9s ease-in-out infinite 0.9s' }} />
+      <StarIcon size={15} color="rgba(139,92,246,0.6)" style={{ position: 'absolute', top: '85%', left: '35%', animation: 'ambientPulse 8.5s ease-in-out infinite 3.0s' }} />
+      <StarIcon size={7}  color="rgba(255,255,255,0.8)" style={{ position: 'absolute', top: '22%', left: '75%', animation: 'ambientPulse 3.5s ease-in-out infinite 1.1s' }} />
+      <StarIcon size={10} color="rgba(120,190,255,0.9)" style={{ position: 'absolute', bottom: '40%', right: '28%', animation: 'ambientPulse 4.8s ease-in-out infinite 2.4s' }} />
+      <StarIcon size={12} color="rgba(140,200,255,0.6)" style={{ position: 'absolute', top: '55%', left: '80%', animation: 'ambientPulse 6.5s ease-in-out infinite 0.6s' }} />
+      <StarIcon size={9}  color="rgba(99,102,241,0.8)" style={{ position: 'absolute', bottom: '5%', left: '85%', animation: 'ambientPulse 5.2s ease-in-out infinite 1.7s' }} />
+      <StarIcon size={6}  color="rgba(200,220,255,0.7)" style={{ position: 'absolute', top: '18%', left: '55%', animation: 'ambientPulse 4.3s ease-in-out infinite 2.2s' }} />
+      <StarIcon size={14} color="rgba(139,92,246,0.5)" style={{ position: 'absolute', bottom: '25%', left: '10%', animation: 'ambientPulse 7.8s ease-in-out infinite 0.4s' }} />
     </div>
   )
 }
