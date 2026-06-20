@@ -4,7 +4,7 @@ import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, Briefcase, FileText, MessageSquare,
-  Bot, Mic, ChevronRight, LogOut, Bug,
+  Bot, Mic, ChevronRight, LogOut, Bug, Edit3,
 } from 'lucide-react'
 import VoiceButton from './VoiceButton'
 import OrbBackground from './OrbBackground'
@@ -24,7 +24,6 @@ export default function Layout() {
   const navigate  = useNavigate()
   const [user, setUser] = useState(JSON.parse(localStorage.getItem('atlas_profile') || '{}'))
   const [showBugReport, setShowBugReport] = useState(false)
-  const initial = (user.name || 'U')[0].toUpperCase()
 
   useEffect(() => {
     const uid = localStorage.getItem('atlas_uid')
@@ -34,6 +33,14 @@ export default function Layout() {
       setUser(updated)
       localStorage.setItem('atlas_profile', JSON.stringify(updated))
     }).catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    const handleProfileUpdate = () => {
+      setUser(JSON.parse(localStorage.getItem('atlas_profile') || '{}'))
+    }
+    window.addEventListener('atlas_profile_updated', handleProfileUpdate)
+    return () => window.removeEventListener('atlas_profile_updated', handleProfileUpdate)
   }, [])
 
   const logout = async () => {
@@ -54,30 +61,32 @@ export default function Layout() {
         {/* ── Premium Logo ─────────────────────────────────────── */}
         <div className="px-5 pt-6 pb-4">
           <div className="flex items-center gap-3">
-            {/* Diamond icon with glow */}
-            <div style={{ position: 'relative', flexShrink: 0 }}>
+            {/* Premium Custom SVG Logo */}
+            <div style={{ position: 'relative', flexShrink: 0, width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg width="34" height="34" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="logo-glow" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#8b5cf6" />
+                    <stop offset="100%" stopColor="#3b82f6" />
+                  </linearGradient>
+                  <linearGradient id="logo-ring" x1="100%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#3b82f6" />
+                    <stop offset="100%" stopColor="#8b5cf6" />
+                  </linearGradient>
+                </defs>
+                <circle cx="16" cy="16" r="14" fill="url(#logo-glow)" fillOpacity="0.15" stroke="url(#logo-glow)" strokeWidth="1" strokeOpacity="0.4" />
+                <circle cx="16" cy="16" r="8" stroke="url(#logo-ring)" strokeWidth="1.5" />
+                <ellipse cx="16" cy="16" rx="8" ry="3" transform="rotate(45 16 16)" stroke="url(#logo-ring)" strokeWidth="1.5" />
+                <ellipse cx="16" cy="16" rx="8" ry="3" transform="rotate(-45 16 16)" stroke="url(#logo-ring)" strokeWidth="1.5" />
+                <circle cx="16" cy="16" r="2.5" fill="url(#logo-glow)" />
+              </svg>
+              {/* Ambient Glow */}
               <div style={{
-                width: 38, height: 38,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                border: '1px solid rgba(140,210,255,0.25)',
-                transform: 'rotate(45deg)',
-                background: 'rgba(100,180,255,0.06)',
-                boxShadow: '0 0 20px rgba(100,190,255,0.14), inset 0 0 10px rgba(100,190,255,0.04)',
-              }}>
-                <span style={{
-                  transform: 'rotate(-45deg)',
-                  fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontWeight: 700, fontSize: 16, lineHeight: 1,
-                  background: 'linear-gradient(135deg, #c8eeff, #a0c4ff)',
-                  WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-                }}>A</span>
-              </div>
-              {/* Glow pulse */}
-              <div style={{
-                position: 'absolute', inset: -4,
-                border: '1px solid rgba(120,190,255,0.1)',
-                transform: 'rotate(45deg)',
-                borderRadius: 2,
+                position: 'absolute', inset: -6,
+                background: 'radial-gradient(circle, rgba(139,92,246,0.3) 0%, transparent 65%)',
                 animation: 'ambientPulse 4s ease-in-out infinite',
+                zIndex: -1,
+                borderRadius: '50%'
               }} />
             </div>
 
@@ -132,33 +141,77 @@ export default function Layout() {
           </NavLink>
         </div>
 
-        {/* Bug report */}
-        <div className="px-3 pb-2">
-          <button onClick={() => { setShowBugReport(true); trackEvent('bug_report_opened') }}
-            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-slate-600 hover:text-slate-400 transition-all"
-            style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)' }}>
-            <Bug size={12} className="text-slate-700" />
-            Report a Bug
-          </button>
-        </div>
+{/* Bug report */}
+<div className="px-3 pb-2">
+  <button
+    onClick={() => {
+      setShowBugReport(true)
+      trackEvent('bug_report_opened')
+    }}
+    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-slate-600 hover:text-slate-400 transition-all"
+    style={{
+      background: 'rgba(255,255,255,0.02)',
+      border: '1px solid rgba(255,255,255,0.04)'
+    }}
+  >
+    <Bug size={12} className="text-slate-700" />
+    Report a Bug
+  </button>
+</div>
 
-        {/* User chip */}
-        <div className="mx-3 mb-4 p-3 rounded-xl flex items-center gap-3"
-          style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)' }}>
-          <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
-            style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}>
-            {initial}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold text-slate-300 truncate">{user.name || 'User'}</p>
-            <p className="mono-label truncate mt-0.5" style={{ color: 'rgba(120,190,255,0.4)' }}>{user.domain || 'Career OS'}</p>
-          </div>
-          <button onClick={logout} title="Sign Out"
-            className="text-slate-600 hover:text-red-400 transition-colors">
-            <LogOut size={12} />
-          </button>
-        </div>
-      </aside>
+{/* Edit Profile */}
+<div className="px-3 pb-4">
+  <button
+    onClick={() => navigate('/profile')}
+    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-slate-600 hover:text-slate-400 transition-all"
+    style={{
+      background: 'rgba(255,255,255,0.02)',
+      border: '1px solid rgba(255,255,255,0.04)'
+    }}
+  >
+    <Edit3 size={12} className="text-slate-700" />
+    Edit Profile
+  </button>
+</div>
+
+<div
+  className="mx-3 mb-4 p-3 rounded-xl flex items-center gap-3"
+  style={{
+    background: 'rgba(255,255,255,0.025)',
+    border: '1px solid rgba(255,255,255,0.06)'
+  }}
+>
+  <div
+    className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
+    style={{
+      background: 'linear-gradient(135deg, #6366f1, #8b5cf6)'
+    }}
+  >
+    {(user.name || 'U')[0].toUpperCase()}
+  </div>
+
+  <div className="flex-1 min-w-0">
+    <p className="text-xs font-semibold text-slate-300 truncate">
+      {user.name || 'User'}
+    </p>
+    <p
+      className="mono-label truncate mt-0.5"
+      style={{ color: 'rgba(120,190,255,0.4)' }}
+    >
+      {user.domain || 'Career OS'}
+    </p>
+  </div>
+
+  <button
+    onClick={logout}
+    title="Sign Out"
+    className="text-slate-600 hover:text-red-400 transition-colors"
+  >
+    <LogOut size={12} />
+  </button>
+</div>
+
+</aside>
 
       {/* ── Main content ─────────────────────────────────────────── */}
       <main className="flex-1 overflow-y-auto relative" style={{ zIndex: 10 }}>
