@@ -2,11 +2,18 @@ services:
   - type: web
     name: atlas-backend
     runtime: python
+    plan: free
     rootDir: .
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
     envVars:
-      - key: GEMINI_API_KEY
+      - key: GROQ_API_KEY
+        sync: false
+      - key: CEREBRAS_API_KEY
+        sync: false
+      - key: JSEARCH_API_KEY
+        sync: false
+      - key: APP_API_KEY
         sync: false
       - key: JWT_SECRET
         sync: false
@@ -18,14 +25,12 @@ services:
         value: ./data/chroma
       - key: FRONTEND_URL
         sync: false
-    disk:
-      name: atlas-data
-      mountPath: /opt/render/project/src/data
-      sizeGB: 1
+
 
   - type: web
     name: atlas-frontend
     runtime: static
+    plan: free
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: ./dist
