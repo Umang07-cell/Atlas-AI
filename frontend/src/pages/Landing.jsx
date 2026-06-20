@@ -11,10 +11,6 @@ const FEATURES = [
 ]
 
 export default function Landing() {
-  // If already logged in, skip landing
-  const token = localStorage.getItem('atlas_token')
-  const uid   = localStorage.getItem('atlas_uid')
-  if (token && uid) return <Navigate to="/dashboard" replace />
 
   return (
     <div style={{ minHeight: '100vh', background: '#000005', overflowX: 'hidden' }}>
