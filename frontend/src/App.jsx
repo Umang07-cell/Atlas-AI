@@ -15,6 +15,7 @@ import VoiceMode from './pages/VoiceMode'
 import Layout from './components/Layout'
 import { trackEvent } from './api'
 import { initSession } from './utils/session'
+import ProfilePage from './pages/ProfilePage'
 
 /** Require a valid JWT token in localStorage */
 function RequireAuth({ children }) {
@@ -51,13 +52,14 @@ export default function App() {
         <Route path="/setup" element={<Setup />} />
 
         {/* Protected app */}
-        <Route path="/" element={<RequireAuth><Layout /></RequireAuth>}>
+        <Route path="/" element={<RequireAuth><Layout /></RequireAuth>}> 
           <Route path="dashboard"  element={<Dashboard />} />
           <Route path="jobs"       element={<JobFeed />} />
           <Route path="resume"     element={<ResumeStudio />} />
           <Route path="interview"  element={<InterviewPrep />} />
           <Route path="chat"       element={<ChatPage />} />
           <Route path="voice"      element={<VoiceMode />} />
+          <Route path="profile" element={<ProfilePage />} />
         </Route>
 
         {/* Unknown routes → landing */}
