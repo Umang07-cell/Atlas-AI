@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom'
 
 const INTENT_ROUTES = {
   navigate_jobs: '/jobs', navigate_resume: '/resume',
-  navigate_interview: '/interview', navigate_chat: '/chat', navigate_dashboard: '/dashboard',
+  navigate_interview: '/interview', navigate_dashboard: '/dashboard',
 }
 const COMMANDS = ['Show me jobs','Open Resume Studio','Start mock interview','Chat with ATLAS','Go to dashboard']
 
@@ -77,7 +77,7 @@ const start = async () => {
       const intent  = data.intent || 'general_query'
       let replyText = data.spoken_response || ''
       setHistory(h => [...h, { role: 'user', text }])
-      if (intent === 'career_question' || intent === 'general_query') {
+      if (intent === 'career_question' || intent === 'general_query' || intent === 'navigate_chat') {
         try { const r = await sendChatMessage(userId, text); replyText = r.data.response } catch {}
       }
       setResponse(replyText)
