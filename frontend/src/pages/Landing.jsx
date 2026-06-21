@@ -30,12 +30,10 @@ export default function Landing() {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          style={{
-            position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10,
+          style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10,
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: '20px 32px',
-          }}
-        >
+            padding: '16px 20px', gap: 8 }}
+          >
           {/* Logo */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{
@@ -158,7 +156,7 @@ export default function Landing() {
           </h2>
         </motion.div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 18 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 18 }}>
           {FEATURES.map(({ icon: Icon, label, desc, color }, i) => (
             <motion.div
               key={label}
