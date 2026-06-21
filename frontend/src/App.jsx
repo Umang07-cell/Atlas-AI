@@ -5,29 +5,21 @@ import { trackEvent } from './api'
 import { initSession } from './utils/session'
 import Layout from './components/Layout'
 
-// Eager — needed immediately on first paint
+// Static imports (Lazy loading conflicts with framer-motion AnimatePresence and causes freezing)
 import Landing from './pages/Landing'
 import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
 import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import Setup from './pages/Setup'
+import Dashboard from './pages/Dashboard'
+import JobFeed from './pages/JobFeed'
+import ResumeStudio from './pages/ResumeStudio'
+import InterviewPrep from './pages/InterviewPrep'
+import ChatPage from './pages/ChatPage'
+import VoiceMode from './pages/VoiceMode'
+import ProfilePage from './pages/ProfilePage'
 
-// Lazy — only loaded when user navigates to that page
-const Dashboard    = lazy(() => import('./pages/Dashboard'))
-const JobFeed      = lazy(() => import('./pages/JobFeed'))
-const ResumeStudio = lazy(() => import('./pages/ResumeStudio'))
-const InterviewPrep = lazy(() => import('./pages/InterviewPrep'))
-const ChatPage     = lazy(() => import('./pages/ChatPage'))
-const VoiceMode    = lazy(() => import('./pages/VoiceMode'))
-const ProfilePage  = lazy(() => import('./pages/ProfilePage'))
 
-function PageLoader() {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', flex: 1 }}>
-      <div style={{ width: 20, height: 20, border: '2px solid rgba(99,102,241,0.3)', borderTopColor: '#6366f1', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
-    </div>
-  )
-}
 
 /** Require a valid JWT token in localStorage */
 function RequireAuth({ children }) {
@@ -65,13 +57,13 @@ export default function App() {
 
         {/* Protected app */}
         <Route path="/" element={<RequireAuth><Layout /></RequireAuth>}>
-          <Route path="dashboard"  element={<Suspense fallback={<PageLoader />}><Dashboard /></Suspense>} />
-          <Route path="jobs"       element={<Suspense fallback={<PageLoader />}><JobFeed /></Suspense>} />
-          <Route path="resume"     element={<Suspense fallback={<PageLoader />}><ResumeStudio /></Suspense>} />
-          <Route path="interview"  element={<Suspense fallback={<PageLoader />}><InterviewPrep /></Suspense>} />
-          <Route path="chat"       element={<Suspense fallback={<PageLoader />}><ChatPage /></Suspense>} />
-          <Route path="voice"      element={<Suspense fallback={<PageLoader />}><VoiceMode /></Suspense>} />
-          <Route path="profile"    element={<Suspense fallback={<PageLoader />}><ProfilePage /></Suspense>} />
+          <Route path="dashboard"  element={<Dashboard />} />
+          <Route path="jobs"       element={<JobFeed />} />
+          <Route path="resume"     element={<ResumeStudio />} />
+          <Route path="interview"  element={<InterviewPrep />} />
+          <Route path="chat"       element={<ChatPage />} />
+          <Route path="voice"      element={<VoiceMode />} />
+          <Route path="profile"    element={<ProfilePage />} />
         </Route>
 
         {/* Unknown routes → landing */}
