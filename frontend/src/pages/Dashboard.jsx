@@ -42,7 +42,7 @@ function StatCard({ icon: Icon, label, value, color, delay = 0, animate = false 
         <Icon size={17} style={{ color }} />
       </div>
       <div className="min-w-0">
-        <p className="text-sm font-bold text-white leading-none mb-0.5 truncate">
+        <p className="text-lg font-bold text-white leading-none mb-0.5 truncate">
           {animate && typeof value === 'number'
             ? <Counter to={value} />
             : value}
@@ -232,8 +232,8 @@ export default function Dashboard() {
       </motion.div>
 
       {/* ── Stats ─────────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 gap-3 mb-8">
-        <StatCard icon={Target}    label="Domain"     value={user.domain?.split(' ')[0] || 'Data'} color="#6366f1" delay={0.05} />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+        <StatCard icon={Target}    label="Domain"     value={user.domain || 'Data Analytics'} color="#6366f1" delay={0.05} />
         <StatCard icon={MapPin}    label="Location"   value={user.location || 'India'} color="#8b5cf6" delay={0.1} />
         <StatCard icon={Award}     label="Level"      value={(user.experience_level || 'Fresher').charAt(0).toUpperCase() + (user.experience_level || 'fresher').slice(1)} color="#06b6d4" delay={0.15} />
         <StatCard icon={TrendingUp} label="Skills"    value={skills.length || 0} color="#10b981" delay={0.2} animate />
