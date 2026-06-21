@@ -1,12 +1,15 @@
 /**
  * PageTransition
  *
- * FIX: shouldReduceEffects() now returns the correct value synchronously
- * (via UA detection in device.js), so no useState/useEffect needed here.
- * Mobile gets a plain div on the very first render — no Framer Motion
- * AnimatePresence, no layout thrash, no freeze.
+ * Mobile: plain div, no animation — avoids GPU thrash / freeze.
+ * Desktop: AnimatePresence mode="popLayout" with fast opacity+y transition.
  *
- * Desktop: completely unchanged.
+ * KEY FIX: changed from mode="wait" to mode="popLayout".
+ * mode="wait" blocks the incoming page until the exit animation fully
+ * completes. If the exit stalls (common with heavy pages + React Router
+ * Outlet), the browser freezes. mode="popLayout" lets both pages coexist
+ * briefly, so the new page mounts immediately and the old one fades out
+ * in the background — no freeze.
  */
 import { motion, AnimatePresence } from 'framer-motion'
 import { useLocation } from 'react-router-dom'
@@ -24,6 +27,7 @@ const reduce = shouldReduceEffects()
 export default function PageTransition({ children }) {
   const location = useLocation()
 
+  // Mobile: skip all animation to avoid GPU freeze
   if (reduce) {
     return (
       <div key={location.pathname} className="flex-1 flex flex-col min-h-0 overflow-y-auto">
@@ -32,8 +36,9 @@ export default function PageTransition({ children }) {
     )
   }
 
+  // Desktop: popLayout lets the new page mount immediately
   return (
-    <AnimatePresence mode="wait" initial={false}>
+    <AnimatePresence mode="popLayout" initial={false}>
       <motion.div
         key={location.pathname}
         variants={variants}
