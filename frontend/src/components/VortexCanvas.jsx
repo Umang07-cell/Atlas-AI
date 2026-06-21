@@ -5,13 +5,9 @@ import { isMobileDevice } from '../utils/device'
  * VortexCanvas — draws a detailed galaxy vortex once on mount.
  * Center is positioned above the canvas top so only the bottom arc is visible.
  *
- * FIX (mobile freeze): the original draw was one synchronous block of ~3840 arc/stroke
- * calls (900+750+650+550+430+320+240+130+70 + rings + rays). On mobile this single
- * synchronous execution can take 200–500ms, freezing the browser during page load.
- *
- * Fix: on mobile, skip the expensive arm layers entirely and draw a lightweight
- * gradient-only version. On desktop the full draw still runs but is chunked across
- * requestAnimationFrame so it doesn't block the first paint.
+ * FIX (mobile freeze only): on mobile, skip the 3840+ arc draw entirely and
+ * render a lightweight gradient version instead. Desktop draw is completely
+ * unchanged — same code, same order, same synchronous execution as original.
  */
 export default function VortexCanvas({ style = {} }) {
   const ref = useRef(null)
@@ -35,7 +31,6 @@ export default function VortexCanvas({ style = {} }) {
       ctx.fillStyle = '#000008'
       ctx.fillRect(0, 0, W, H)
 
-      // Sparse stars — 80 instead of 300
       for (let i = 0; i < 80; i++) {
         const sx = rng(i * 3.13) * W
         const sy = rng(i * 7.37) * H
@@ -45,14 +40,12 @@ export default function VortexCanvas({ style = {} }) {
         ctx.beginPath(); ctx.arc(sx, sy, sr, 0, Math.PI * 2); ctx.fill()
       }
 
-      // Outer glow — just two radial gradients, no arc loops
       const atmo = ctx.createRadialGradient(cx, cy, RA * 0.3, cx, cy, RA * 2.0)
       atmo.addColorStop(0, 'transparent')
       atmo.addColorStop(0.3, 'rgba(30,70,160,0.18)')
       atmo.addColorStop(1, 'transparent')
       ctx.fillStyle = atmo; ctx.fillRect(0, 0, W, H)
 
-      // Single ring glow
       const r = RA * 1.0, rb = r * (RB / RA)
       ctx.strokeStyle = 'rgba(95,180,255,0.22)'; ctx.lineWidth = 5
       ctx.beginPath(); ctx.ellipse(cx, cy, r, rb, 0, 0, Math.PI * 2); ctx.stroke()
@@ -60,7 +53,6 @@ export default function VortexCanvas({ style = {} }) {
       ctx.strokeStyle = 'rgba(205,240,255,0.5)'; ctx.lineWidth = 0.8
       ctx.beginPath(); ctx.ellipse(cx, cy, RA * 0.987, RA * 0.987 * (RB / RA), 0, 0, Math.PI * 2); ctx.stroke()
 
-      // Core bloom
       const bloom = ctx.createRadialGradient(cx, cy, 0, cx, cy, RA * 0.56)
       bloom.addColorStop(0,    'rgba(235,250,255,0.9)')
       bloom.addColorStop(0.06, 'rgba(185,232,255,0.6)')
@@ -68,7 +60,6 @@ export default function VortexCanvas({ style = {} }) {
       bloom.addColorStop(1,    'transparent')
       ctx.fillStyle = bloom; ctx.fillRect(0, 0, W, H)
 
-      // Core void
       const void1 = ctx.createRadialGradient(cx, cy, 0, cx, cy, RA * 0.49)
       void1.addColorStop(0,   'rgba(0,0,0,1)')
       void1.addColorStop(0.5, 'rgba(0,0,4,0.97)')
@@ -79,8 +70,7 @@ export default function VortexCanvas({ style = {} }) {
       return
     }
 
-    // ── DESKTOP: full draw, chunked across rAF to avoid blocking first paint ──
-    // Phase 1 — background + stars (fast, run immediately)
+    // ── DESKTOP: original draw — untouched ──
     ctx.fillStyle = '#000005'
     ctx.fillRect(0, 0, W, H)
 
@@ -101,7 +91,6 @@ export default function VortexCanvas({ style = {} }) {
     atmo.addColorStop(1, 'transparent')
     ctx.fillStyle = atmo; ctx.fillRect(0, 0, W, H)
 
-    // Phase 2 — arm layers (expensive, deferred to next frame)
     function armLayer(rScale, count, hue, baseAlpha, lineW, spread) {
       for (let i = 0; i < count; i++) {
         const angle = (i / count) * Math.PI * 2
@@ -118,93 +107,88 @@ export default function VortexCanvas({ style = {} }) {
       }
     }
 
-    requestAnimationFrame(() => {
-      armLayer(1.28, 900, 210, 0.55, 1.8, 0.18)
-      armLayer(1.12, 750, 215, 0.50, 1.5, 0.13)
-      armLayer(0.96, 650, 205, 0.48, 1.3, 0.10)
-      armLayer(0.83, 550, 200, 0.60, 1.1, 0.08)
-      armLayer(0.73, 430, 195, 0.52, 0.9, 0.07)
-      armLayer(0.62, 320, 190, 0.68, 0.8, 0.06)
-      armLayer(0.52, 240, 185, 0.58, 0.5, 0.04)
+    armLayer(1.28, 900, 210, 0.55, 1.8, 0.18)
+    armLayer(1.12, 750, 215, 0.50, 1.5, 0.13)
+    armLayer(0.96, 650, 205, 0.48, 1.3, 0.10)
+    armLayer(0.83, 550, 200, 0.60, 1.1, 0.08)
+    armLayer(0.73, 430, 195, 0.52, 0.9, 0.07)
+    armLayer(0.62, 320, 190, 0.68, 0.8, 0.06)
+    armLayer(0.52, 240, 185, 0.58, 0.5, 0.04)
 
-      // Phase 3 — overlays (deferred to frame after arms)
-      requestAnimationFrame(() => {
-        for (let i = 0; i < 130; i++) {
-          const angle = Math.PI * 0.7 + (rng(i * 6.1) - 0.5) * Math.PI * 1.5
-          const r = RA * (0.55 + rng(i * 3.7) * 0.68)
-          const rb = r * (RB / RA)
-          const len = 0.014 + rng(i * 2.2) * 0.045
-          const bright = rng(i * 8.1)
-          if (bright < 0.32) continue
-          ctx.strokeStyle = `rgba(185,228,255,${bright * 0.38})`
-          ctx.lineWidth = 0.35 + bright * 0.7
-          ctx.beginPath(); ctx.ellipse(cx, cy, r, rb, 0, angle, angle + len); ctx.stroke()
-        }
+    for (let i = 0; i < 130; i++) {
+      const angle = Math.PI * 0.7 + (rng(i * 6.1) - 0.5) * Math.PI * 1.5
+      const r = RA * (0.55 + rng(i * 3.7) * 0.68)
+      const rb = r * (RB / RA)
+      const len = 0.014 + rng(i * 2.2) * 0.045
+      const bright = rng(i * 8.1)
+      if (bright < 0.32) continue
+      ctx.strokeStyle = `rgba(185,228,255,${bright * 0.38})`
+      ctx.lineWidth = 0.35 + bright * 0.7
+      ctx.beginPath(); ctx.ellipse(cx, cy, r, rb, 0, angle, angle + len); ctx.stroke()
+    }
 
-        const rings = [
-          [1.04, 0.18, 8,   'rgba(75,155,255,'],
-          [0.99, 0.22, 5,   'rgba(95,180,255,'],
-          [0.94, 0.17, 3.5, 'rgba(115,198,255,'],
-          [0.88, 0.20, 3,   'rgba(135,213,255,'],
-          [0.79, 0.19, 2,   'rgba(158,223,255,'],
-          [0.69, 0.23, 2,   'rgba(178,233,255,'],
-          [0.59, 0.29, 1.5, 'rgba(198,241,255,'],
-        ]
-        rings.forEach(([rs, a, w, col]) => {
-          const r = RA * rs, rb = r * (RB / RA)
-          ctx.strokeStyle = col + a + ')'; ctx.lineWidth = w
-          ctx.beginPath(); ctx.ellipse(cx, cy, r, rb, 0, 0, Math.PI * 2); ctx.stroke()
-        })
-
-        ctx.strokeStyle = 'rgba(205,240,255,0.72)'; ctx.lineWidth = 0.9
-        ctx.beginPath(); ctx.ellipse(cx, cy, RA * 0.987, RA * 0.987 * (RB / RA), 0, 0, Math.PI * 2); ctx.stroke()
-
-        ctx.strokeStyle = 'rgba(222,246,255,0.42)'; ctx.lineWidth = 0.45
-        ctx.beginPath(); ctx.ellipse(cx, cy, RA * 0.73, RA * 0.73 * (RB / RA), 0, 0, Math.PI * 2); ctx.stroke()
-
-        ctx.strokeStyle = 'rgba(255,80,160,0.055)'; ctx.lineWidth = 2
-        ctx.beginPath(); ctx.ellipse(cx - 1.5, cy + 1, RA * 0.99, RA * 0.99 * (RB / RA), 0, 0, Math.PI * 2); ctx.stroke()
-        ctx.strokeStyle = 'rgba(60,255,200,0.055)'; ctx.lineWidth = 1.5
-        ctx.beginPath(); ctx.ellipse(cx + 1.5, cy - 1, RA * 0.977, RA * 0.977 * (RB / RA), 0, 0, Math.PI * 2); ctx.stroke()
-
-        const bloom = ctx.createRadialGradient(cx, cy, 0, cx, cy, RA * 0.56)
-        bloom.addColorStop(0,    'rgba(235,250,255,0.95)')
-        bloom.addColorStop(0.04, 'rgba(185,232,255,0.72)')
-        bloom.addColorStop(0.12, 'rgba(125,202,255,0.36)')
-        bloom.addColorStop(0.30, 'rgba(72,152,242,0.13)')
-        bloom.addColorStop(0.60, 'rgba(42,92,202,0.05)')
-        bloom.addColorStop(1,    'transparent')
-        ctx.fillStyle = bloom; ctx.fillRect(0, 0, W, H)
-
-        for (let i = 0; i < 18; i++) {
-          const angle = (i / 18) * Math.PI * 2
-          const len = RA * (0.38 + rng(i * 9.1) * 0.42)
-          const x2 = cx + Math.cos(angle) * len * 1.45
-          const y2 = cy + Math.sin(angle) * len * 0.36
-          const g = ctx.createLinearGradient(cx, cy, x2, y2)
-          g.addColorStop(0, 'rgba(205,240,255,0.14)'); g.addColorStop(0.4, 'rgba(145,212,255,0.05)'); g.addColorStop(1, 'transparent')
-          ctx.strokeStyle = g; ctx.lineWidth = 0.8 + rng(i * 4.3) * 2.2
-          ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(x2, y2); ctx.stroke()
-        }
-
-        const void1 = ctx.createRadialGradient(cx, cy, 0, cx, cy, RA * 0.49)
-        void1.addColorStop(0,   'rgba(0,0,0,1)')
-        void1.addColorStop(0.5, 'rgba(0,0,4,0.98)')
-        void1.addColorStop(0.8, 'rgba(0,2,10,0.76)')
-        void1.addColorStop(1,   'transparent')
-        ctx.fillStyle = void1
-        ctx.beginPath(); ctx.ellipse(cx, cy, RA * 0.53, RA * 0.53 * (RB / RA) * 1.1, 0, 0, Math.PI * 2); ctx.fill()
-
-        for (let i = 0; i < 70; i++) {
-          const angle = rng(i * 13.7) * Math.PI * 2
-          const r = RA * (1.1 + rng(i * 5.3) * 0.45)
-          const rb = r * (RB / RA) * 0.88
-          const len = 0.028 + rng(i * 2.9) * 0.08
-          ctx.strokeStyle = `rgba(75,135,215,${rng(i * 7.1) * 0.09})`; ctx.lineWidth = 0.35
-          ctx.beginPath(); ctx.ellipse(cx, cy, r, rb, 0, angle, angle + len); ctx.stroke()
-        }
-      })
+    const rings = [
+      [1.04, 0.18, 8,   'rgba(75,155,255,'],
+      [0.99, 0.22, 5,   'rgba(95,180,255,'],
+      [0.94, 0.17, 3.5, 'rgba(115,198,255,'],
+      [0.88, 0.20, 3,   'rgba(135,213,255,'],
+      [0.79, 0.19, 2,   'rgba(158,223,255,'],
+      [0.69, 0.23, 2,   'rgba(178,233,255,'],
+      [0.59, 0.29, 1.5, 'rgba(198,241,255,'],
+    ]
+    rings.forEach(([rs, a, w, col]) => {
+      const r = RA * rs, rb = r * (RB / RA)
+      ctx.strokeStyle = col + a + ')'; ctx.lineWidth = w
+      ctx.beginPath(); ctx.ellipse(cx, cy, r, rb, 0, 0, Math.PI * 2); ctx.stroke()
     })
+
+    ctx.strokeStyle = 'rgba(205,240,255,0.72)'; ctx.lineWidth = 0.9
+    ctx.beginPath(); ctx.ellipse(cx, cy, RA * 0.987, RA * 0.987 * (RB / RA), 0, 0, Math.PI * 2); ctx.stroke()
+
+    ctx.strokeStyle = 'rgba(222,246,255,0.42)'; ctx.lineWidth = 0.45
+    ctx.beginPath(); ctx.ellipse(cx, cy, RA * 0.73, RA * 0.73 * (RB / RA), 0, 0, Math.PI * 2); ctx.stroke()
+
+    ctx.strokeStyle = 'rgba(255,80,160,0.055)'; ctx.lineWidth = 2
+    ctx.beginPath(); ctx.ellipse(cx - 1.5, cy + 1, RA * 0.99, RA * 0.99 * (RB / RA), 0, 0, Math.PI * 2); ctx.stroke()
+    ctx.strokeStyle = 'rgba(60,255,200,0.055)'; ctx.lineWidth = 1.5
+    ctx.beginPath(); ctx.ellipse(cx + 1.5, cy - 1, RA * 0.977, RA * 0.977 * (RB / RA), 0, 0, Math.PI * 2); ctx.stroke()
+
+    const bloom = ctx.createRadialGradient(cx, cy, 0, cx, cy, RA * 0.56)
+    bloom.addColorStop(0,    'rgba(235,250,255,0.95)')
+    bloom.addColorStop(0.04, 'rgba(185,232,255,0.72)')
+    bloom.addColorStop(0.12, 'rgba(125,202,255,0.36)')
+    bloom.addColorStop(0.30, 'rgba(72,152,242,0.13)')
+    bloom.addColorStop(0.60, 'rgba(42,92,202,0.05)')
+    bloom.addColorStop(1,    'transparent')
+    ctx.fillStyle = bloom; ctx.fillRect(0, 0, W, H)
+
+    for (let i = 0; i < 18; i++) {
+      const angle = (i / 18) * Math.PI * 2
+      const len = RA * (0.38 + rng(i * 9.1) * 0.42)
+      const x2 = cx + Math.cos(angle) * len * 1.45
+      const y2 = cy + Math.sin(angle) * len * 0.36
+      const g = ctx.createLinearGradient(cx, cy, x2, y2)
+      g.addColorStop(0, 'rgba(205,240,255,0.14)'); g.addColorStop(0.4, 'rgba(145,212,255,0.05)'); g.addColorStop(1, 'transparent')
+      ctx.strokeStyle = g; ctx.lineWidth = 0.8 + rng(i * 4.3) * 2.2
+      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(x2, y2); ctx.stroke()
+    }
+
+    const void1 = ctx.createRadialGradient(cx, cy, 0, cx, cy, RA * 0.49)
+    void1.addColorStop(0,   'rgba(0,0,0,1)')
+    void1.addColorStop(0.5, 'rgba(0,0,4,0.98)')
+    void1.addColorStop(0.8, 'rgba(0,2,10,0.76)')
+    void1.addColorStop(1,   'transparent')
+    ctx.fillStyle = void1
+    ctx.beginPath(); ctx.ellipse(cx, cy, RA * 0.53, RA * 0.53 * (RB / RA) * 1.1, 0, 0, Math.PI * 2); ctx.fill()
+
+    for (let i = 0; i < 70; i++) {
+      const angle = rng(i * 13.7) * Math.PI * 2
+      const r = RA * (1.1 + rng(i * 5.3) * 0.45)
+      const rb = r * (RB / RA) * 0.88
+      const len = 0.028 + rng(i * 2.9) * 0.08
+      ctx.strokeStyle = `rgba(75,135,215,${rng(i * 7.1) * 0.09})`; ctx.lineWidth = 0.35
+      ctx.beginPath(); ctx.ellipse(cx, cy, r, rb, 0, angle, angle + len); ctx.stroke()
+    }
   }, [])
 
   return (
