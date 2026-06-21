@@ -20,41 +20,11 @@ const NAV = [
   { to: '/chat',      icon: Bot,             label: 'ATLAS Chat',     mono: 'CHAT' },
 ]
 
-export default function Layout() {
-  const navigate  = useNavigate()
-  const location  = useLocation()
-  const [user, setUser] = useState(JSON.parse(localStorage.getItem('atlas_profile') || '{}'))
-  const [showBugReport, setShowBugReport] = useState(false)
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-
-  useEffect(() => { setSidebarOpen(false) }, [location.pathname])
-
-  useEffect(() => {
-    const uid = localStorage.getItem('atlas_uid')
-    if (!uid) return
-    getProfile(parseInt(uid)).then(({ data }) => {
-      const updated = { name: data.name, domain: data.domain, experience_level: data.experience_level }
-      setUser(updated)
-      localStorage.setItem('atlas_profile', JSON.stringify(updated))
-    }).catch(() => {})
-  }, [])
-
-  useEffect(() => {
-    const handleProfileUpdate = () => {
-      setUser(JSON.parse(localStorage.getItem('atlas_profile') || '{}'))
-    }
-    window.addEventListener('atlas_profile_updated', handleProfileUpdate)
-    return () => window.removeEventListener('atlas_profile_updated', handleProfileUpdate)
-  }, [])
-
-  const logout = async () => {
-    trackEvent('logout')
-    try { await logoutApi() } catch (_) {}
-    clearSession()
-    navigate('/login')
-  }
-
-  const SidebarContent = () => (
+/* ── Sidebar ── extracted as a top-level component so React never
+   re-creates it on every Layout render (which would freeze AnimatePresence) */
+function SidebarContent({ user, logout, setShowBugReport }) {
+  const navigate = useNavigate()
+  return (
     <>
       <div className="px-5 pt-6 pb-4">
         <div className="flex items-center gap-3">
@@ -158,11 +128,11 @@ export default function Layout() {
         style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)' }}>
         <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
           style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}>
-          {(user.name || 'U')[0].toUpperCase()}
+          {(user?.name || 'U')[0].toUpperCase()}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-semibold text-slate-300 truncate">{user.name || 'User'}</p>
-          <p className="mono-label truncate mt-0.5" style={{ color: 'rgba(120,190,255,0.4)' }}>{user.domain || 'Career OS'}</p>
+          <p className="text-xs font-semibold text-slate-300 truncate">{user?.name || 'User'}</p>
+          <p className="mono-label truncate mt-0.5" style={{ color: 'rgba(120,190,255,0.4)' }}>{user?.domain || 'Career OS'}</p>
         </div>
         <button onClick={logout} title="Sign Out" className="text-slate-600 hover:text-red-400 transition-colors">
           <LogOut size={12} />
@@ -170,6 +140,42 @@ export default function Layout() {
       </div>
     </>
   )
+}
+
+/* ── Main Layout ── */
+export default function Layout() {
+  const navigate  = useNavigate()
+  const location  = useLocation()
+  const [user, setUser] = useState(JSON.parse(localStorage.getItem('atlas_profile') || '{}'))
+  const [showBugReport, setShowBugReport] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  useEffect(() => { setSidebarOpen(false) }, [location.pathname])
+
+  useEffect(() => {
+    const uid = localStorage.getItem('atlas_uid')
+    if (!uid) return
+    getProfile(parseInt(uid)).then(({ data }) => {
+      const updated = { name: data.name, domain: data.domain, experience_level: data.experience_level }
+      setUser(updated)
+      localStorage.setItem('atlas_profile', JSON.stringify(updated))
+    }).catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    const handleProfileUpdate = () => {
+      setUser(JSON.parse(localStorage.getItem('atlas_profile') || '{}'))
+    }
+    window.addEventListener('atlas_profile_updated', handleProfileUpdate)
+    return () => window.removeEventListener('atlas_profile_updated', handleProfileUpdate)
+  }, [])
+
+  const logout = async () => {
+    trackEvent('logout')
+    try { await logoutApi() } catch (_) {}
+    clearSession()
+    navigate('/login')
+  }
 
   return (
     <div className="flex h-screen overflow-hidden" style={{ background: 'var(--bg)' }}>
@@ -178,10 +184,10 @@ export default function Layout() {
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex w-60 shrink-0 flex-col relative"
         style={{ background: 'rgba(4,4,10,0.88)', backdropFilter: 'blur(22px)', borderRight: '1px solid rgba(255,255,255,0.06)', zIndex: 20 }}>
-        <SidebarContent />
+        <SidebarContent user={user} logout={logout} setShowBugReport={setShowBugReport} />
       </aside>
 
-      {/* Mobile Top Bar — no backdrop blur on mobile (GPU-heavy) */}
+      {/* Mobile Top Bar */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-4 py-3 safe-top"
         style={{ background: 'rgba(4,4,10,0.98)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
         <div className="flex items-center gap-2">
@@ -214,13 +220,13 @@ export default function Layout() {
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
               className="md:hidden fixed top-0 left-0 bottom-0 w-60 flex flex-col z-50"
               style={{ background: 'rgba(4,4,10,0.99)', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
-              <SidebarContent />
+              <SidebarContent user={user} logout={logout} setShowBugReport={setShowBugReport} />
             </motion.aside>
           </>
         )}
       </AnimatePresence>
 
-      {/* Main content — flex column + min-h-0 avoids nested h-screen scroll traps on mobile */}
+      {/* Main content */}
       <main className="flex-1 flex flex-col min-h-0 overflow-hidden relative md:pt-0 pt-14" style={{ zIndex: 10 }}>
         <PageTransition>
           <Outlet />
