@@ -1,6 +1,5 @@
-import { useEffect, lazy, Suspense } from 'react'
+import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
-import { AnimatePresence } from 'framer-motion'
 import { trackEvent } from './api'
 import { initSession } from './utils/session'
 import Layout from './components/Layout'
