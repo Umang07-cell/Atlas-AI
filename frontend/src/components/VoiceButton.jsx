@@ -36,7 +36,8 @@ const start = async () => {
     setState('recording')
 
     // Auto-stop on silence
-    const audioCtx = new AudioContext()
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext
+    const audioCtx = new AudioContextClass()
     const source = audioCtx.createMediaStreamSource(stream)
     const analyser = audioCtx.createAnalyser()
     analyser.fftSize = 512
@@ -50,9 +51,9 @@ const start = async () => {
       if (mediaRef.current?.state === 'inactive') { audioCtx.close(); return }
       analyser.getByteFrequencyData(data)
       const avg = data.reduce((a, b) => a + b, 0) / data.length
-      if (avg < 8) {
+      if (avg < 5) {
         if (!silenceStart) silenceStart = Date.now()
-        else if (Date.now() - silenceStart > 1800) { audioCtx.close(); stop(); return }
+        else if (Date.now() - silenceStart > 3000) { audioCtx.close(); stop(); return }
       } else {
         silenceStart = null
       }
