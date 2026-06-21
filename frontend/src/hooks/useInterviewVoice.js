@@ -13,6 +13,7 @@
  */
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { speakText, transcribeInterviewAudio } from '../api'
+import { isMobileDevice } from '../utils/device'
 
 const SILENCE_THRESHOLD = 8       // RMS below this = silence
 const MIN_SPEECH_MS = 600          // must detect voice for at least this long before silence matters
@@ -60,6 +61,10 @@ export default function useInterviewVoice({ onTranscript, disabled = false, auto
 
   const stopRecording = useCallback(() => {
     recordingRef.current = false
+    if (mediaRecorderRef.current?._pollTimer) {
+      clearTimeout(mediaRecorderRef.current._pollTimer)
+      mediaRecorderRef.current._pollTimer = null
+    }
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stop()   // triggers onstop → transcription
     }
@@ -151,6 +156,9 @@ export default function useInterviewVoice({ onTranscript, disabled = false, auto
     recorder.start(100)
     setTurnState('listening')
 
+    const pollMs = isMobileDevice() ? 120 : 16
+    let pollTimer = null
+
     const tick = () => {
       if (!recordingRef.current) return
 
@@ -177,10 +185,11 @@ export default function useInterviewVoice({ onTranscript, disabled = false, auto
         return
       }
 
-      requestAnimationFrame(tick)
+      pollTimer = setTimeout(tick, pollMs)
     }
 
-    requestAnimationFrame(tick)
+    pollTimer = setTimeout(tick, pollMs)
+    mediaRecorderRef.current._pollTimer = pollTimer
   }, [stopRecording])
 
   // Keep ref current so speak()'s closure can always call the latest startRecording
