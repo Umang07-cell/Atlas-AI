@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { useLocation } from 'react-router-dom'
+import { shouldReduceEffects } from '../utils/device'
 
 const variants = {
   initial: { opacity: 0, y: 14 },
@@ -9,6 +10,16 @@ const variants = {
 
 export default function PageTransition({ children }) {
   const location = useLocation()
+  const reduce = shouldReduceEffects()
+
+  if (reduce) {
+    return (
+      <div key={location.pathname} className="flex-1 flex flex-col min-h-0 overflow-y-auto">
+        {children}
+      </div>
+    )
+  }
+
   return (
     <AnimatePresence mode="wait" initial={false}>
       <motion.div
@@ -17,7 +28,7 @@ export default function PageTransition({ children }) {
         initial="initial"
         animate="animate"
         exit="exit"
-        style={{ minHeight: '100%' }}
+        className="flex-1 flex flex-col min-h-0 overflow-y-auto"
       >
         {children}
       </motion.div>
