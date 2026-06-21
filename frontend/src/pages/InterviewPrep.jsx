@@ -131,15 +131,23 @@ export default function InterviewPrep() {
   const containerRef = useRef(null)
 
 const enterFullscreen = () => {
+  // FIX: skip on ALL mobile — iOS Safari doesn't support requestFullscreen on
+  // documentElement and the failed call triggers a layout recalculation that
+  // freezes the page for 1–2s. Even on Android the layout shift causes jank.
   if (isMobileDevice()) return
-  const el = document.documentElement
-  if (el.requestFullscreen) el.requestFullscreen()
-  else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen()
+  try {
+    const el = document.documentElement
+    if (el.requestFullscreen) el.requestFullscreen().catch(() => {})
+    else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen()
+  } catch (_) {}
 }
 
 const exitFullscreen = () => {
-  if (document.exitFullscreen) document.exitFullscreen()
-  else if (document.webkitExitFullscreen) document.webkitExitFullscreen()
+  if (isMobileDevice()) return
+  try {
+    if (document.exitFullscreen) document.exitFullscreen().catch(() => {})
+    else if (document.webkitExitFullscreen) document.webkitExitFullscreen()
+  } catch (_) {}
 }
 
   sessionRef.current = session
