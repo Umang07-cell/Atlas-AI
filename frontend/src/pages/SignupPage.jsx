@@ -153,7 +153,7 @@ export default function SignupPage() {
                     <label className="mono-label" style={{ display: 'block', marginBottom: 6 }}>Full Name</label>
                     <div style={{ position: 'relative' }}>
                       <User size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'rgba(148,163,184,0.5)' }} />
-                      <input type="text" className="input" placeholder="Umang Pawar" style={{ paddingLeft: 36 }}
+                      <input type="text" autoComplete="name" className="input" placeholder="Your full name" style={{ paddingLeft: 36 }}
                         value={creds.name} onChange={e => setCreds({...creds, name: e.target.value})} required />
                     </div>
                   </div>
@@ -161,7 +161,7 @@ export default function SignupPage() {
                     <label className="mono-label" style={{ display: 'block', marginBottom: 6 }}>Email</label>
                     <div style={{ position: 'relative' }}>
                       <Mail size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'rgba(148,163,184,0.5)' }} />
-                      <input type="email" className="input" placeholder="you@example.com" style={{ paddingLeft: 36 }}
+                      <input type="email" autoComplete="email" className="input" placeholder="you@example.com" style={{ paddingLeft: 36 }}
                         value={creds.email} onChange={e => setCreds({...creds, email: e.target.value})} required />
                     </div>
                   </div>
@@ -169,7 +169,7 @@ export default function SignupPage() {
                     <label className="mono-label" style={{ display: 'block', marginBottom: 6 }}>Password</label>
                     <div style={{ position: 'relative' }}>
                       <Lock size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'rgba(148,163,184,0.5)' }} />
-                      <input type={showPw ? 'text' : 'password'} className="input" placeholder="Min. 8 characters" style={{ paddingLeft: 36, paddingRight: 36 }}
+                      <input type={showPw ? 'text' : 'password'} autoComplete="new-password" className="input" placeholder="Min. 8 characters"style={{ paddingLeft: 36, paddingRight: 36 }}
                         value={creds.password} onChange={e => setCreds({...creds, password: e.target.value})} required />
                       <button type="button" onClick={() => setShowPw(!showPw)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'rgba(148,163,184,0.5)', cursor: 'pointer', padding: 0 }}>
                         {showPw ? <EyeOff size={14} /> : <Eye size={14} />}
