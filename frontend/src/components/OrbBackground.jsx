@@ -1,19 +1,33 @@
 /**
- * OrbBackground — premium ambient background for app interior pages.
- * Lightweight CSS/SVG only. No canvas, no WebGL.
+ * OrbBackground — ambient background for app interior pages.
  *
- * FIX (mobile freeze): shouldReduceEffects() was called at render time,
- * before the DOM was ready. On mobile, matchMedia returns stale results
- * this early → full desktop version rendered → GPU/CPU freeze.
+ * FIX (mobile freeze + logo blur):
+ * The previous fix used useState + useEffect to detect mobile, but this caused
+ * a second render AFTER mount. That second render (from useEffect calling setReduce)
+ * re-rendered the Layout including the logo SVG mid-animation — causing the logo
+ * to appear blurred/scaled at whatever frame ambientPulse was on.
  *
- * Fix: read device type inside useState initialiser (runs at mount, not
- * module eval) and confirm with a useEffect after first paint. This means
- * mobile always gets the lightweight path from the very first render.
+ * Root cause of freeze: ambientPulse uses transform:scale() which forces GPU
+ * composite layers. 20+ StarIcons + 3 orb divs firing simultaneously on first
+ * paint = GPU overload on mobile. The mobile path strips all of this — but only
+ * if isMobileDevice() returns correctly on the VERY FIRST render (not after useEffect).
  *
- * Desktop: completely unchanged visually.
+ * Real fix: read device type synchronously from the URL/userAgent which is available
+ * immediately at module eval time, not from matchMedia which can be stale.
+ * This means the correct (mobile/desktop) branch renders on the very first paint,
+ * no re-render needed, no logo flicker.
  */
-import { useState, useEffect } from 'react'
-import { shouldReduceEffects } from '../utils/device'
+
+// Read UA synchronously — available before DOM is ready, never stale
+function isMobileSafe() {
+  if (typeof navigator === 'undefined') return false
+  // pointer:coarse via matchMedia is ideal but can be stale at module eval time.
+  // UA sniffing is reliable synchronously and only used for this initial render.
+  const ua = navigator.userAgent || ''
+  return /Android|iPhone|iPad|iPod|Mobile|IEMobile|Opera Mini/i.test(ua)
+}
+
+const IS_MOBILE = isMobileSafe()
 
 const StarIcon = ({ style, color, size }) => (
   <svg style={{ ...style, width: size, height: size }} viewBox="0 0 512 512" fill={color} xmlns="http://www.w3.org/2000/svg">
@@ -22,21 +36,15 @@ const StarIcon = ({ style, color, size }) => (
 )
 
 export default function OrbBackground() {
-  // useState initialiser runs at mount (not module eval) — device is ready by then
-  const [reduce, setReduce] = useState(() => shouldReduceEffects())
-
-  useEffect(() => {
-    // Confirm after first paint in case matchMedia was stale on very first call
-    setReduce(shouldReduceEffects())
-  }, [])
-
-  if (reduce) {
+  // No useState, no useEffect — renders correctly on first paint, no re-render
+  if (IS_MOBILE) {
     return (
       <div
         aria-hidden="true"
         className="fixed inset-0 overflow-hidden pointer-events-none select-none"
         style={{ zIndex: 0, background: 'var(--bg)' }}
       >
+        {/* Two static gradients — no animation, no GPU composite layers */}
         <div style={{
           position: 'absolute', top: '-10%', left: '50%', transform: 'translateX(-50%)',
           width: '90vw', height: '40vh', borderRadius: '50%',
@@ -51,6 +59,7 @@ export default function OrbBackground() {
     )
   }
 
+  // Desktop — completely unchanged from original
   return (
     <div
       aria-hidden="true"
@@ -65,7 +74,6 @@ export default function OrbBackground() {
         filter: 'blur(80px)',
         animation: 'ambientPulse 14s ease-in-out infinite',
       }} />
-
       <div style={{
         position: 'absolute', bottom: '10%', left: '-10%',
         width: '55vw', height: '55vw', maxWidth: 580, maxHeight: 580,
@@ -74,7 +82,6 @@ export default function OrbBackground() {
         filter: 'blur(90px)',
         animation: 'ambientPulse 18s ease-in-out infinite reverse',
       }} />
-
       <div style={{
         position: 'absolute', top: '20%', right: '-8%',
         width: '40vw', height: '40vw', maxWidth: 440, maxHeight: 440,
@@ -83,7 +90,6 @@ export default function OrbBackground() {
         filter: 'blur(70px)',
         animation: 'ambientPulse 22s ease-in-out infinite 3s',
       }} />
-
       <StarIcon size={14} color="rgba(140,200,255,0.8)" style={{ position: 'absolute', top: '10%', left: '15%', animation: 'ambientPulse 4s ease-in-out infinite' }} />
       <StarIcon size={8}  color="rgba(139,92,246,0.9)" style={{ position: 'absolute', top: '25%', right: '20%', animation: 'ambientPulse 3.2s ease-in-out infinite 0.8s' }} />
       <StarIcon size={12} color="rgba(120,190,255,0.7)" style={{ position: 'absolute', top: '60%', left: '45%', animation: 'ambientPulse 6s ease-in-out infinite 1.5s' }} />
