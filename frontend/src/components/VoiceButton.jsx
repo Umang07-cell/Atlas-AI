@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Mic, MicOff, Loader2 } from 'lucide-react'
 import { transcribeAudio, speakText } from '../api'
 import { useNavigate } from 'react-router-dom'
+import { isMobileDevice } from '../utils/device'
 
 const INTENT_ROUTES = {
   navigate_jobs:      '/jobs',
@@ -42,6 +43,8 @@ const start = async () => {
     source.connect(analyser)
     const data = new Uint8Array(analyser.frequencyBinCount)
     let silenceStart = null
+    const pollMs = isMobileDevice() ? 150 : 16
+    let pollTimer = null
 
     const checkSilence = () => {
       if (mediaRef.current?.state === 'inactive') { audioCtx.close(); return }
@@ -53,9 +56,10 @@ const start = async () => {
       } else {
         silenceStart = null
       }
-      requestAnimationFrame(checkSilence)
+      pollTimer = setTimeout(checkSilence, pollMs)
     }
-    requestAnimationFrame(checkSilence)
+    pollTimer = setTimeout(checkSilence, pollMs)
+    mediaRef.current._pollTimer = pollTimer
 
   } catch { alert('Microphone access denied') }
 }
