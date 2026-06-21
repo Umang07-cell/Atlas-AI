@@ -14,7 +14,7 @@ export default function PageTransition({ children }) {
 
   if (reduce) {
     return (
-      <div key={location.pathname} className="flex-1 flex flex-col min-h-0 overflow-y-auto">
+      <div key={location.pathname} className="flex-1 flex flex-col min-h-0">
         {children}
       </div>
     )
@@ -28,7 +28,7 @@ export default function PageTransition({ children }) {
         initial="initial"
         animate="animate"
         exit="exit"
-        className="flex-1 flex flex-col min-h-0 overflow-y-auto"
+        className="flex-1 flex flex-col min-h-0"
       >
         {children}
       </motion.div>
