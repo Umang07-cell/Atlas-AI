@@ -11,6 +11,7 @@ import OrbBackground from './OrbBackground'
 import PageTransition from './PageTransition'
 import BugReportModal from './BugReportModal'
 import { clearSession } from '../utils/session'
+import { IS_MOBILE } from '../utils/device'
 
 const NAV = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard',     mono: 'HOME' },
@@ -79,7 +80,7 @@ export default function Layout() {
             <div style={{
               position: 'absolute', inset: -6,
               background: 'radial-gradient(circle, rgba(139,92,246,0.3) 0%, transparent 65%)',
-              animation: 'ambientPulse 4s ease-in-out infinite',
+              animation: IS_MOBILE ? 'none' : 'ambientPulse 4s ease-in-out infinite',
               zIndex: -1, borderRadius: '50%'
             }} />
           </div>
