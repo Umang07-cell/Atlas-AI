@@ -1,7 +1,11 @@
 let cachedIsMobile = null;
 export function isMobileDevice() {
   if (typeof window === 'undefined') return false
-  if (cachedIsMobile !== null) return cachedIsMobile;
+  // FIX: only cache once the document is interactive/complete.
+  // If called during early module evaluation (before DOMContentLoaded), 
+  // matchMedia may return stale viewport dimensions on some mobile browsers,
+  // causing shouldReduceEffects() to return false on mobile.
+  if (cachedIsMobile !== null && document.readyState !== 'loading') return cachedIsMobile;
   cachedIsMobile = (
     window.matchMedia('(max-width: 768px)').matches ||
     window.matchMedia('(pointer: coarse)').matches
