@@ -34,6 +34,13 @@
     -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
   }
+
+  /* Fix iOS 100vh / keyboard issues */
+  @supports (-webkit-touch-callout: none) {
+    .h-screen, .min-h-screen {
+      min-height: -webkit-fill-available;
+    }
+  }
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.10); border-radius: 4px; }
@@ -311,4 +318,20 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Mobile performance: disable expensive backdrop-filter globally */
+@media (max-width: 768px) {
+  .glass, .glass-hi {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}
+
+/* Safe area for bottom input bars on notched phones */
+.safe-bottom {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+.safe-top {
+  padding-top: max(0.75rem, env(safe-area-inset-top));
 }
