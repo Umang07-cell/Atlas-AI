@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { startInterview, sendInterviewMessage, endInterview, listInterviewSessions } from '../api'
 import useInterviewVoice from '../hooks/useInterviewVoice'
-import { Loader2, Trophy, ChevronRight, RotateCcw, Volume2, Clock, User, MessageSquare, PhoneOff, Mic } from 'lucide-react'
+import { isMobileDevice, shouldReduceEffects } from '../utils/device'
+import { Loader2, Trophy, ChevronRight, RotateCcw, Volume2, Clock, User, PhoneOff } from 'lucide-react'
 
 const LEVELS = [
   { value: 'fresher',     label: 'Fresher',     desc: '0–1 year',  emoji: '🌱' },
@@ -130,6 +131,7 @@ export default function InterviewPrep() {
   const containerRef = useRef(null)
 
 const enterFullscreen = () => {
+  if (isMobileDevice()) return
   const el = document.documentElement
   if (el.requestFullscreen) el.requestFullscreen()
   else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen()
@@ -315,11 +317,16 @@ const exitFullscreen = () => {
   )
 
   /* ── LIVE INTERVIEW ── */
+  const reduce = shouldReduceEffects()
   return (
-    <div className="flex flex-col h-screen max-w-2xl mx-auto">
+    <div className="flex flex-col flex-1 min-h-0 max-w-2xl mx-auto w-full">
       {/* Header */}
-      <div className="px-6 py-4 flex items-center justify-between shrink-0"
-        style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(5,5,10,0.7)', backdropFilter: 'blur(10px)' }}>
+      <div className="px-4 sm:px-6 py-4 flex items-center justify-between shrink-0"
+        style={{
+          borderBottom: '1px solid rgba(255,255,255,0.06)',
+          background: reduce ? 'rgba(5,5,10,0.95)' : 'rgba(5,5,10,0.7)',
+          ...(reduce ? {} : { backdropFilter: 'blur(10px)' }),
+        }}>
         <div>
           <h2 className="text-sm font-semibold text-white">Live Interview — {LEVELS.find(l=>l.value===level)?.emoji} {LEVELS.find(l=>l.value===level)?.label}</h2>
           <div className="mt-1.5"><PhaseBar phase={phase} /></div>
@@ -340,41 +347,36 @@ const exitFullscreen = () => {
       </div>
 
       {/* Voice room */}
-      <div className="flex-1 flex flex-col items-center justify-center gap-7 px-6">
-        {/* Background glow */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 rounded-full"
-            style={{ background: isSpeaking ? 'radial-gradient(circle, rgba(99,102,241,0.1) 0%, transparent 70%)' : 'transparent', filter: 'blur(40px)', transition: 'all 0.8s ease' }} />
-        </div>
+      <div className="flex-1 min-h-0 overflow-y-auto flex flex-col items-center justify-center gap-7 px-4 sm:px-6 py-6 overscroll-contain">
+        {/* Background glow — skip heavy blur on mobile */}
+        {!reduce && (
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 rounded-full"
+              style={{ background: isSpeaking ? 'radial-gradient(circle, rgba(99,102,241,0.1) 0%, transparent 70%)' : 'transparent', filter: 'blur(40px)', transition: 'all 0.8s ease' }} />
+          </div>
+        )}
 
         {/* Interviewer avatar */}
         <div className="relative">
-          <motion.div
-            animate={{ scale: isSpeaking ? 1.08 : 1 }}
-            transition={{ duration: 0.4, ease: 'easeOut' }}
-            className="w-28 h-28 rounded-full flex items-center justify-center"
+          <div
+            className="w-28 h-28 rounded-full flex items-center justify-center transition-transform duration-300"
             style={{
               background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
               boxShadow: isSpeaking ? '0 0 60px rgba(99,102,241,0.5)' : '0 0 30px rgba(99,102,241,0.2)',
-              transition: 'box-shadow 0.5s ease',
+              transform: isSpeaking && !reduce ? 'scale(1.08)' : 'scale(1)',
             }}
           >
             <User size={44} className="text-white" />
-          </motion.div>
+          </div>
           {/* Speaking bars */}
-          <AnimatePresence>
-            {isSpeaking && (
-              <motion.div
-                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                className="absolute -bottom-4 left-1/2 -translate-x-1/2 flex gap-1 items-end"
-              >
-                {[0,1,2,3,4].map(i => (
-                  <div key={i} className="w-1 bg-indigo-400 rounded-full animate-bounce"
-                    style={{ height: `${8+(i%3)*6}px`, animationDelay: `${i*0.1}s` }} />
-                ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {isSpeaking && !reduce && (
+            <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 flex gap-1 items-end">
+              {[0,1,2,3,4].map(i => (
+                <div key={i} className="w-1 bg-indigo-400 rounded-full animate-bounce"
+                  style={{ height: `${8+(i%3)*6}px`, animationDelay: `${i*0.1}s` }} />
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Current question */}
@@ -392,13 +394,16 @@ const exitFullscreen = () => {
           <p className="text-xs text-slate-500">{statusText}</p>
           {liveTranscript && <p className="text-xs text-emerald-400 italic">You: "{liveTranscript}"</p>}
           {(loading || isProcessing) && !isListening && <Loader2 size={18} className="animate-spin text-indigo-400 mx-auto" />}
-          {isListening && (
+          {isListening && !reduce && (
             <div className="flex gap-1 items-end justify-center h-8">
               {[0,1,2,3,4].map(i => (
                 <div key={i} className="w-1.5 bg-emerald-400 rounded-full animate-bounce"
                   style={{ height:`${10+(i%3)*8}px`, animationDelay:`${i*0.12}s` }} />
               ))}
             </div>
+          )}
+          {isListening && reduce && (
+            <p className="text-xs text-emerald-400">Listening…</p>
           )}
         </div>
       </div>
