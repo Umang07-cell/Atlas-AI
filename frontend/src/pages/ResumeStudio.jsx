@@ -53,7 +53,7 @@ export default function ResumeStudio() {
   }
 
   return (
-    <div className="p-4 sm:p-6 max-w-6xl mx-auto">
+    <div className="p-4 sm:p-8 max-w-[1400px] mx-auto w-full">
       {/* Header */}
       {reduce ? (
         <div className="mb-7">
