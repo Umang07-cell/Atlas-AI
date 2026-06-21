@@ -227,7 +227,7 @@ const exitFullscreen = () => {
 
   /* ── SETUP ── */
   if (stage === 'setup') return (
-    <div className="p-6 md:p-8 max-w-3xl mx-auto w-full">
+    <div className="flex-1 min-h-0 overflow-y-auto p-6 md:p-8 max-w-3xl mx-auto w-full">
       <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.32 }} className="mb-7">
         <p className="mono-label mb-1.5">Simulation</p>
         <h1 className="text-2xl text-white mb-1" style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontWeight: 700 }}>AI Mock Interview</h1>
@@ -299,7 +299,7 @@ const exitFullscreen = () => {
 
   /* ── COMPLETE ── */
   if (stage === 'complete') return (
-    <div className="p-6 md:p-8 max-w-3xl mx-auto w-full">
+    <div className="flex-1 min-h-0 overflow-y-auto p-6 md:p-8 max-w-3xl mx-auto w-full">
       <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
         <h1 className="text-2xl text-white" style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontWeight: 700 }}>Interview Complete</h1>
         <p className="text-xs text-slate-500 mt-1">Here's your detailed performance report.</p>
