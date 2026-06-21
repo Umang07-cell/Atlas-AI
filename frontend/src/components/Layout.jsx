@@ -185,8 +185,14 @@ export default function Layout() {
       <div className="md:hidden fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-4 py-3 safe-top"
         style={{ background: 'rgba(4,4,10,0.98)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
         <div className="flex items-center gap-2">
-          <h1 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontWeight: 700, fontSize: 17, color: 'white', margin: 0 }}>Atlas</h1>
-          <p className="mono-label" style={{ color: 'rgba(120,190,255,0.4)', fontSize: 8, letterSpacing: '0.18em' }}>AI CAREER OS</p>
+          <svg width="22" height="22" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="16" cy="16" r="14" fill="#8b5cf6" fillOpacity="0.15" stroke="#8b5cf6" strokeWidth="1" strokeOpacity="0.4" />
+            <circle cx="16" cy="16" r="8" stroke="#6366f1" strokeWidth="1.5" />
+            <ellipse cx="16" cy="16" rx="8" ry="3" transform="rotate(45 16 16)" stroke="#7c3aed" strokeWidth="1.5" />
+            <ellipse cx="16" cy="16" rx="8" ry="3" transform="rotate(-45 16 16)" stroke="#3b82f6" strokeWidth="1.5" />
+            <circle cx="16" cy="16" r="2.5" fill="#8b5cf6" />
+          </svg>
+          <h1 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontWeight: 700, fontSize: 17, color: 'white', margin: 0, marginTop: 2 }}>Atlas</h1>
         </div>
         <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-slate-400 hover:text-white transition-colors p-1">
           {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
