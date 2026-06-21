@@ -1,39 +1,40 @@
 /**
- * device.js — mobile detection and reduced-effects helpers.
+ * device.js
  *
- * FIX: isMobileDevice() was being called at module evaluation time
- * (component top-level, outside useEffect) — before the browser had
- * finished rendering. On mobile, matchMedia can return stale results
- * this early, so shouldReduceEffects() returned false → full desktop
- * rendering fired → page froze on every first load.
+ * FIX: matchMedia('pointer:coarse') can return stale/false on mobile when called
+ * at module evaluation time (before DOM is interactive). This caused shouldReduceEffects()
+ * to return false on first render → full desktop GPU-heavy rendering → freeze.
  *
- * Fix: never cache on the first call if document is still loading.
- * Re-evaluate until readyState is interactive/complete, then lock in.
+ * Solution: use UA sniffing for the synchronous initial value (available before DOM),
+ * then confirm with matchMedia after the document is ready. UA sniffing is only used
+ * for this one-time initial detection — it's reliable for mobile/desktop distinction.
  */
 
-let cachedIsMobile = null
-export function isMobileDevice() {
-  if (typeof window === 'undefined') return false
-  // Only lock in the cache once the DOM is fully ready
-  if (cachedIsMobile !== null && document.readyState !== 'loading') {
-    return cachedIsMobile
+function detectMobile() {
+  if (typeof navigator === 'undefined') return false
+  const ua = navigator.userAgent || ''
+  // UA is always available synchronously, never stale
+  if (/Android|iPhone|iPad|iPod|Mobile|IEMobile|Opera Mini/i.test(ua)) return true
+  // Fallback: matchMedia (reliable once DOM is ready)
+  if (typeof window !== 'undefined') {
+    return window.matchMedia('(pointer: coarse)').matches ||
+           window.matchMedia('(max-width: 768px)').matches
   }
-  cachedIsMobile = (
-    window.matchMedia('(max-width: 768px)').matches ||
-    window.matchMedia('(pointer: coarse)').matches
-  )
-  return cachedIsMobile
+  return false
 }
 
-let cachedPrefersReduced = null
+// Evaluated once at module load — synchronous, no stale results
+export const IS_MOBILE = detectMobile()
+
+export function isMobileDevice() {
+  return IS_MOBILE
+}
+
 export function prefersReducedMotion() {
   if (typeof window === 'undefined') return false
-  if (cachedPrefersReduced !== null) return cachedPrefersReduced
-  cachedPrefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  return cachedPrefersReduced
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches
 }
 
-/** Use simplified UI / fewer animations on mobile or when user prefers reduced motion. */
 export function shouldReduceEffects() {
-  return isMobileDevice() || prefersReducedMotion()
+  return IS_MOBILE || prefersReducedMotion()
 }
