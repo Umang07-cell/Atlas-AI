@@ -35,7 +35,8 @@ const start = async () => {
     setTranscript(''); setResponse('')
 
     // Auto-stop using silence detection
-    const audioCtx = new AudioContext()
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext
+    const audioCtx = new AudioContextClass()
     const source = audioCtx.createMediaStreamSource(stream)
     const analyser = audioCtx.createAnalyser()
     analyser.fftSize = 512
