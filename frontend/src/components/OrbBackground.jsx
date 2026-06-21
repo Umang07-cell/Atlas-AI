@@ -1,18 +1,8 @@
 /**
  * OrbBackground — premium ambient background for app interior pages.
  * Lightweight CSS/SVG only. No canvas, no WebGL.
- *
- * FIX (mobile freeze): shouldReduceEffects() was called at render time,
- * before the DOM was ready. On mobile, matchMedia returns stale results
- * this early → full desktop version rendered → GPU/CPU freeze.
- *
- * Fix: read device type inside useState initialiser (runs at mount, not
- * module eval) and confirm with a useEffect after first paint. This means
- * mobile always gets the lightweight path from the very first render.
- *
- * Desktop: completely unchanged visually.
+ * Mobile variant strips blur + most animated stars to prevent GPU freeze.
  */
-import { useState, useEffect } from 'react'
 import { shouldReduceEffects } from '../utils/device'
 
 const StarIcon = ({ style, color, size }) => (
@@ -22,13 +12,7 @@ const StarIcon = ({ style, color, size }) => (
 )
 
 export default function OrbBackground() {
-  // useState initialiser runs at mount (not module eval) — device is ready by then
-  const [reduce, setReduce] = useState(() => shouldReduceEffects())
-
-  useEffect(() => {
-    // Confirm after first paint in case matchMedia was stale on very first call
-    setReduce(shouldReduceEffects())
-  }, [])
+  const reduce = shouldReduceEffects()
 
   if (reduce) {
     return (
