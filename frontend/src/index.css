@@ -37,7 +37,10 @@
 
   /* Fix iOS 100vh / keyboard issues */
   @supports (-webkit-touch-callout: none) {
-    .h-screen, .min-h-screen {
+    .h-screen {
+      height: -webkit-fill-available;
+    }
+    .min-h-screen {
       min-height: -webkit-fill-available;
     }
   }
