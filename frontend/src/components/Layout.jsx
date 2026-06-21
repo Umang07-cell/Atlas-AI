@@ -181,9 +181,9 @@ export default function Layout() {
         <SidebarContent />
       </aside>
 
-      {/* Mobile Top Bar */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-4 py-3"
-        style={{ background: 'rgba(4,4,10,0.95)', backdropFilter: 'blur(22px)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+      {/* Mobile Top Bar — no backdrop blur on mobile (GPU-heavy) */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-4 py-3 safe-top"
+        style={{ background: 'rgba(4,4,10,0.98)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
         <div className="flex items-center gap-2">
           <h1 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontWeight: 700, fontSize: 17, color: 'white', margin: 0 }}>Atlas</h1>
           <p className="mono-label" style={{ color: 'rgba(120,190,255,0.4)', fontSize: 8, letterSpacing: '0.18em' }}>AI CAREER OS</p>
@@ -207,19 +207,19 @@ export default function Layout() {
               initial={{ x: -240 }} animate={{ x: 0 }} exit={{ x: -240 }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
               className="md:hidden fixed top-0 left-0 bottom-0 w-60 flex flex-col z-50"
-              style={{ background: 'rgba(4,4,10,0.98)', backdropFilter: 'blur(22px)', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
+              style={{ background: 'rgba(4,4,10,0.99)', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
               <SidebarContent />
             </motion.aside>
           </>
         )}
       </AnimatePresence>
 
-      {/* Main content */}
-      <main className="flex-1 overflow-y-auto relative md:pt-0 pt-14" style={{ zIndex: 10 }}>
+      {/* Main content — flex column + min-h-0 avoids nested h-screen scroll traps on mobile */}
+      <main className="flex-1 flex flex-col min-h-0 overflow-hidden relative md:pt-0 pt-14" style={{ zIndex: 10 }}>
         <PageTransition>
           <Outlet />
         </PageTransition>
-        <VoiceButton />
+        {!['/chat', '/interview', '/voice'].includes(location.pathname) && <VoiceButton />}
       </main>
 
       <AnimatePresence>
