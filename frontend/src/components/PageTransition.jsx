@@ -1,14 +1,13 @@
 /**
- * PageTransition — wraps page content with a fade+slide animation.
+ * PageTransition
  *
- * FIX (mobile freeze): same issue as OrbBackground — shouldReduceEffects()
- * was called outside a hook at render time, returning false on mobile first
- * render → Framer Motion AnimatePresence fired → layout thrash → freeze.
+ * FIX: shouldReduceEffects() now returns the correct value synchronously
+ * (via UA detection in device.js), so no useState/useEffect needed here.
+ * Mobile gets a plain div on the very first render — no Framer Motion
+ * AnimatePresence, no layout thrash, no freeze.
  *
- * Fix: useState lazy initialiser reads device type at mount. useEffect
- * confirms after first paint. Desktop path completely unchanged.
+ * Desktop: completely unchanged.
  */
-import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useLocation } from 'react-router-dom'
 import { shouldReduceEffects } from '../utils/device'
@@ -19,13 +18,11 @@ const variants = {
   exit:    { opacity: 0, y: -10, transition: { duration: 0.18, ease: 'easeIn' } },
 }
 
+// Evaluated once — synchronous, correct on first render
+const reduce = shouldReduceEffects()
+
 export default function PageTransition({ children }) {
   const location = useLocation()
-  const [reduce, setReduce] = useState(() => shouldReduceEffects())
-
-  useEffect(() => {
-    setReduce(shouldReduceEffects())
-  }, [])
 
   if (reduce) {
     return (
