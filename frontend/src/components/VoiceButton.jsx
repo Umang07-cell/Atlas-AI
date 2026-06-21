@@ -51,9 +51,9 @@ const start = async () => {
       if (mediaRef.current?.state === 'inactive') { audioCtx.close(); return }
       analyser.getByteFrequencyData(data)
       const avg = data.reduce((a, b) => a + b, 0) / data.length
-      if (avg < 5) {
+      if (avg < 8) {
         if (!silenceStart) silenceStart = Date.now()
-        else if (Date.now() - silenceStart > 3000) { audioCtx.close(); stop(); return }
+        else if (Date.now() - silenceStart > 1800) { audioCtx.close(); stop(); return }
       } else {
         silenceStart = null
       }
