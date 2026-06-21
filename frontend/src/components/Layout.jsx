@@ -61,20 +61,20 @@ export default function Layout() {
           <div style={{ position: 'relative', flexShrink: 0, width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <svg width="34" height="34" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
               <defs>
-                <linearGradient id="atlas-logo-glow-1" x1="0%" y1="0%" x2="100%" y2="100%">
+                <linearGradient id="lg1" x1="0%" y1="0%" x2="100%" y2="100%" gradientUnits="userSpaceOnUse">
                   <stop offset="0%" stopColor="#8b5cf6" />
                   <stop offset="100%" stopColor="#3b82f6" />
                 </linearGradient>
-                <linearGradient id="atlas-logo-ring-1" x1="100%" y1="0%" x2="0%" y2="100%">
+                <linearGradient id="lg2" x1="100%" y1="0%" x2="0%" y2="100%" gradientUnits="userSpaceOnUse">
                   <stop offset="0%" stopColor="#3b82f6" />
                   <stop offset="100%" stopColor="#8b5cf6" />
                 </linearGradient>
               </defs>
-              <circle cx="16" cy="16" r="14" fill="url(#atlas-logo-glow-1)" fillOpacity="0.15" stroke="url(#atlas-logo-glow-1)" strokeWidth="1" strokeOpacity="0.4" />
-              <circle cx="16" cy="16" r="8" stroke="url(#atlas-logo-ring-1)" strokeWidth="1.5" />
-              <ellipse cx="16" cy="16" rx="8" ry="3" transform="rotate(45 16 16)" stroke="url(#atlas-logo-ring-1)" strokeWidth="1.5" />
-              <ellipse cx="16" cy="16" rx="8" ry="3" transform="rotate(-45 16 16)" stroke="url(#atlas-logo-ring-1)" strokeWidth="1.5" />
-              <circle cx="16" cy="16" r="2.5" fill="url(#atlas-logo-glow-1)" />
+              <circle cx="16" cy="16" r="14" fill="#8b5cf6" fillOpacity="0.15" stroke="#8b5cf6" strokeWidth="1" strokeOpacity="0.4" />
+              <circle cx="16" cy="16" r="8" stroke="#6366f1" strokeWidth="1.5" />
+              <ellipse cx="16" cy="16" rx="8" ry="3" transform="rotate(45 16 16)" stroke="#7c3aed" strokeWidth="1.5" />
+              <ellipse cx="16" cy="16" rx="8" ry="3" transform="rotate(-45 16 16)" stroke="#3b82f6" strokeWidth="1.5" />
+              <circle cx="16" cy="16" r="2.5" fill="#8b5cf6" />
             </svg>
             <div style={{
               position: 'absolute', inset: -6,
