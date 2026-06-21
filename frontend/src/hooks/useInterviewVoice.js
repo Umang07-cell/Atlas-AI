@@ -10,41 +10,44 @@
  *   Instead, startRecording is stored in a ref so speak() can call it without stale closures.
  * - No Web Speech API. STT is Whisper via /voice/transcribe/interview.
  * - No fixed timers for silence. AudioContext AnalyserNode detects actual silence.
+ *
+ * FIX (mobile freeze): poll timer was stored on mediaRecorderRef._pollTimer — a property
+ * that could be overwritten or lost. It's now in a dedicated pollTimerRef so stopRecording()
+ * always cancels it before AudioContext.close(), preventing orphaned tick() loops that
+ * compete with the UI thread and freeze the page on mobile.
  */
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { speakText, transcribeInterviewAudio } from '../api'
 import { isMobileDevice } from '../utils/device'
 
-const SILENCE_THRESHOLD = 8       // RMS below this = silence
-const MIN_SPEECH_MS = 600          // must detect voice for at least this long before silence matters
-const SILENCE_STOP_MS = 1500       // 1.5 s of silence after speech ends the recording
-const MAX_RECORDING_MS = 90_000    // safety cap
+const SILENCE_THRESHOLD = 8
+const MIN_SPEECH_MS     = 600
+const SILENCE_STOP_MS   = 1500
+const MAX_RECORDING_MS  = 90_000
 
 export default function useInterviewVoice({ onTranscript, disabled = false, autoListen = false }) {
-  const [turnState, setTurnState] = useState('idle')   // 'idle' | 'speaking' | 'listening' | 'processing'
+  const [turnState, setTurnState]       = useState('idle')
   const [liveTranscript, setLiveTranscript] = useState('')
 
-  // ── refs that must never go stale inside async closures ──
-  const autoListenRef  = useRef(autoListen)
-  const disabledRef    = useRef(disabled)
-  const onTranscriptRef = useRef(onTranscript)
-  const speakingRef    = useRef(false)
-  const recordingRef   = useRef(false)
+  const autoListenRef    = useRef(autoListen)
+  const disabledRef      = useRef(disabled)
+  const onTranscriptRef  = useRef(onTranscript)
+  const speakingRef      = useRef(false)
+  const recordingRef     = useRef(false)
 
-  // MediaRecorder / AudioContext handles
   const mediaRecorderRef = useRef(null)
   const streamRef        = useRef(null)
   const audioCtxRef      = useRef(null)
   const chunksRef        = useRef([])
+  // FIX: dedicated ref for poll timer — never lost or overwritten
+  const pollTimerRef     = useRef(null)
 
-  // Ref to startRecording so speak() can call the latest version without dep issues
   const startRecordingRef = useRef(null)
 
-  useEffect(() => { autoListenRef.current  = autoListen  }, [autoListen])
-  useEffect(() => { disabledRef.current    = disabled    }, [disabled])
+  useEffect(() => { autoListenRef.current   = autoListen  }, [autoListen])
+  useEffect(() => { disabledRef.current     = disabled    }, [disabled])
   useEffect(() => { onTranscriptRef.current = onTranscript }, [onTranscript])
 
-  // ── CLEANUP helpers ──
   const _releaseAudioCtx = () => {
     if (audioCtxRef.current) {
       audioCtxRef.current.close().catch(() => {})
@@ -61,18 +64,21 @@ export default function useInterviewVoice({ onTranscript, disabled = false, auto
 
   const stopRecording = useCallback(() => {
     recordingRef.current = false
-    if (mediaRecorderRef.current?._pollTimer) {
-      clearTimeout(mediaRecorderRef.current._pollTimer)
-      mediaRecorderRef.current._pollTimer = null
+
+    // FIX: cancel the tick() loop BEFORE closing AudioContext
+    // Previously this used mediaRecorderRef._pollTimer which could be lost
+    if (pollTimerRef.current) {
+      clearTimeout(pollTimerRef.current)
+      pollTimerRef.current = null
     }
+
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.stop()   // triggers onstop → transcription
+      mediaRecorderRef.current.stop()
     }
     _releaseAudioCtx()
     _releaseStream()
   }, [])
 
-  // ── CORE: start recording + silence detection ──
   const startRecording = useCallback(async () => {
     if (disabledRef.current || speakingRef.current || recordingRef.current) return
 
@@ -113,19 +119,16 @@ export default function useInterviewVoice({ onTranscript, disabled = false, auto
 
       setTurnState('processing')
       try {
-        const blob = new Blob(chunksRef.current, { type: mimeType })
+        const blob   = new Blob(chunksRef.current, { type: mimeType })
         const userId = parseInt(localStorage.getItem('atlas_uid') || '0', 10)
         const { data } = await transcribeInterviewAudio(blob, userId)
         const text = (data.transcript || '').trim()
         if (text) {
           setLiveTranscript(text)
           if (onTranscriptRef.current) {
-            // onTranscript is async and will call speak() for the next question.
-            // speak() will trigger startRecording again via autoListen when done.
             await onTranscriptRef.current(text)
           }
         } else {
-          // nothing heard — re-open mic immediately if still in interview
           setTurnState('idle')
           if (autoListenRef.current && !disabledRef.current) {
             setTimeout(() => startRecordingRef.current?.(), 400)
@@ -137,7 +140,7 @@ export default function useInterviewVoice({ onTranscript, disabled = false, auto
       }
     }
 
-    // ── AudioContext silence detection ──
+    // AudioContext silence detection
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)()
     audioCtxRef.current = audioCtx
 
@@ -146,36 +149,33 @@ export default function useInterviewVoice({ onTranscript, disabled = false, auto
     const source = audioCtx.createMediaStreamSource(stream)
     source.connect(analyser)
 
-    const freqData = new Uint8Array(analyser.frequencyBinCount)
-
-    let speechDetected = false
+    const freqData      = new Uint8Array(analyser.frequencyBinCount)
+    let speechDetected  = false
     let speechStartTime = 0
-    let lastVoiceTime = Date.now()
-    const recordStartTime = Date.now()
+    let lastVoiceTime   = Date.now()
+    const recordStart   = Date.now()
 
     recorder.start(100)
     setTurnState('listening')
 
     const pollMs = isMobileDevice() ? 120 : 16
-    let pollTimer = null
 
     const tick = () => {
+      // FIX: check recordingRef and audioCtxRef before every tick
+      // Without this, the loop survives stopRecording() on mobile
       if (!recordingRef.current) return
+      if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') return
 
       analyser.getByteFrequencyData(freqData)
       const rms = freqData.reduce((a, b) => a + b, 0) / freqData.length
-
       const now = Date.now()
 
       if (rms > SILENCE_THRESHOLD) {
-        if (!speechDetected) {
-          speechDetected = true
-          speechStartTime = now
-        }
+        if (!speechDetected) { speechDetected = true; speechStartTime = now }
         lastVoiceTime = now
       }
 
-      const elapsed      = now - recordStartTime
+      const elapsed      = now - recordStart
       const silenceDur   = now - lastVoiceTime
       const speechDur    = speechDetected ? (lastVoiceTime - speechStartTime) : 0
       const spokenEnough = speechDetected && speechDur >= MIN_SPEECH_MS
@@ -185,23 +185,20 @@ export default function useInterviewVoice({ onTranscript, disabled = false, auto
         return
       }
 
-      pollTimer = setTimeout(tick, pollMs)
+      // FIX: store in dedicated pollTimerRef
+      pollTimerRef.current = setTimeout(tick, pollMs)
     }
 
-    pollTimer = setTimeout(tick, pollMs)
-    mediaRecorderRef.current._pollTimer = pollTimer
+    pollTimerRef.current = setTimeout(tick, pollMs)
   }, [stopRecording])
 
-  // Keep ref current so speak()'s closure can always call the latest startRecording
   useEffect(() => {
     startRecordingRef.current = startRecording
   }, [startRecording])
 
-  // ── SPEAK: play TTS audio, then auto-open mic ──
   const speak = useCallback(async (text) => {
     if (!text?.trim()) return
 
-    // Stop any active recording before we speak
     stopRecording()
     speakingRef.current = true
     setTurnState('speaking')
@@ -217,30 +214,26 @@ export default function useInterviewVoice({ onTranscript, disabled = false, auto
         audio.play().catch(() => resolve())
       })
     } catch (err) {
-      console.warn('[useInterviewVoice] TTS backend failed, falling back to browser speech:', err)
-      // Browser speechSynthesis as last resort
+      console.warn('[useInterviewVoice] TTS failed, falling back to browser speech:', err)
       await new Promise((resolve) => {
         if (!window.speechSynthesis) { resolve(); return }
         window.speechSynthesis.cancel()
         const u = new SpeechSynthesisUtterance(text)
         u.rate = 0.92
-        u.onend = resolve
+        u.onend  = resolve
         u.onerror = resolve
         window.speechSynthesis.speak(u)
       })
     } finally {
       speakingRef.current = false
       setTurnState('idle')
-      // After speaking, auto-open mic if still in interview mode
       if (autoListenRef.current && !disabledRef.current) {
         setTimeout(() => startRecordingRef.current?.(), 300)
       }
     }
   }, [stopRecording])
-  // NOTE: speak does NOT list startRecording as a dep — it uses startRecordingRef
-  // to avoid stale closures when startRecording is recreated.
 
-  // Cleanup on unmount
+  // Cleanup on unmount — kills any live recording when navigating away
   useEffect(() => {
     return () => {
       stopRecording()
