@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Mic, MicOff, Loader2 } from 'lucide-react'
 import { transcribeAudio, speakText } from '../api'
@@ -15,59 +15,130 @@ const INTENT_ROUTES = {
 }
 
 export default function VoiceButton() {
-  const [state, setState]         = useState('idle')
+  const [state, setState]           = useState('idle')
   const [transcript, setTranscript] = useState('')
-  const mediaRef  = useRef(null)
-  const chunksRef = useRef([])
-  const navigate  = useNavigate()
-  const userId    = localStorage.getItem('atlas_uid')
+  const mediaRef    = useRef(null)
+  const chunksRef   = useRef([])
+  const audioCtxRef = useRef(null)   // FIX: track AudioContext in a ref
+  const pollTimerRef = useRef(null)  // FIX: track poll timer in a ref
+  const stoppedRef  = useRef(false)  // FIX: guard against double-stop
+  const navigate    = useNavigate()
+  const userId      = localStorage.getItem('atlas_uid')
 
-const start = async () => {
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-    let mimeType = 'audio/webm'
-    if (!MediaRecorder.isTypeSupported('audio/webm')) mimeType = 'audio/ogg'
-    const recorder = new MediaRecorder(stream, MediaRecorder.isTypeSupported(mimeType) ? { mimeType } : {})
-    chunksRef.current = []
-    recorder.ondataavailable = e => e.data.size > 0 && chunksRef.current.push(e.data)
-    recorder.onstop = handleStop
-    recorder.start(100)
-    mediaRef.current = recorder
-    setState('recording')
-
-    // Auto-stop on silence
-    const AudioContextClass = window.AudioContext || window.webkitAudioContext
-    const audioCtx = new AudioContextClass()
-    const source = audioCtx.createMediaStreamSource(stream)
-    const analyser = audioCtx.createAnalyser()
-    analyser.fftSize = 512
-    source.connect(analyser)
-    const data = new Uint8Array(analyser.frequencyBinCount)
-    let silenceStart = null
-    const pollMs = isMobileDevice() ? 150 : 16
-    let pollTimer = null
-
-    const checkSilence = () => {
-      if (mediaRef.current?.state === 'inactive') { audioCtx.close(); return }
-      analyser.getByteFrequencyData(data)
-      const avg = data.reduce((a, b) => a + b, 0) / data.length
-      if (avg < 8) {
-        if (!silenceStart) silenceStart = Date.now()
-        else if (Date.now() - silenceStart > 1800) { audioCtx.close(); stop(); return }
-      } else {
-        silenceStart = null
-      }
-      pollTimer = setTimeout(checkSilence, pollMs)
+  // FIX: clean up AudioContext + poll timer + stream on unmount (navigation away)
+  useEffect(() => {
+    return () => {
+      cleanup()
     }
-    pollTimer = setTimeout(checkSilence, pollMs)
-    mediaRef.current._pollTimer = pollTimer
+  }, [])
 
-  } catch { alert('Microphone access denied') }
-}
+  const cleanup = () => {
+    // Clear the silence-detection poll loop first
+    if (pollTimerRef.current) {
+      clearTimeout(pollTimerRef.current)
+      pollTimerRef.current = null
+    }
+    // Close AudioContext
+    if (audioCtxRef.current) {
+      audioCtxRef.current.close().catch(() => {})
+      audioCtxRef.current = null
+    }
+    // Stop MediaRecorder + stream tracks
+    if (mediaRef.current) {
+      if (mediaRef.current.state !== 'inactive') {
+        try { mediaRef.current.stop() } catch (_) {}
+      }
+      try {
+        mediaRef.current.stream?.getTracks().forEach(t => t.stop())
+      } catch (_) {}
+      mediaRef.current = null
+    }
+  }
+
+  const start = async () => {
+    if (state !== 'idle') return
+    stoppedRef.current = false
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+
+      let mimeType = 'audio/webm'
+      if (!MediaRecorder.isTypeSupported('audio/webm')) mimeType = 'audio/ogg'
+      const recorder = new MediaRecorder(
+        stream,
+        MediaRecorder.isTypeSupported(mimeType) ? { mimeType } : {}
+      )
+      chunksRef.current = []
+      recorder.ondataavailable = e => e.data.size > 0 && chunksRef.current.push(e.data)
+      recorder.onstop = handleStop
+      recorder.start(100)
+      mediaRef.current = recorder
+      setState('recording')
+
+      // AudioContext silence detection
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext
+      const audioCtx = new AudioContextClass()
+      audioCtxRef.current = audioCtx  // FIX: store in ref so cleanup() can reach it
+
+      const source = audioCtx.createMediaStreamSource(stream)
+      const analyser = audioCtx.createAnalyser()
+      analyser.fftSize = 512
+      source.connect(analyser)
+      const data = new Uint8Array(analyser.frequencyBinCount)
+      let silenceStart = null
+      const pollMs = isMobileDevice() ? 150 : 16
+
+      const checkSilence = () => {
+        // FIX: exit immediately if manually stopped already
+        if (stoppedRef.current) return
+
+        if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') return
+
+        analyser.getByteFrequencyData(data)
+        const avg = data.reduce((a, b) => a + b, 0) / data.length
+        if (avg < 8) {
+          if (!silenceStart) silenceStart = Date.now()
+          else if (Date.now() - silenceStart > 1800) {
+            stop()  // auto-stop on silence
+            return
+          }
+        } else {
+          silenceStart = null
+        }
+        // FIX: store timer in ref so cleanup() can cancel it
+        pollTimerRef.current = setTimeout(checkSilence, pollMs)
+      }
+      pollTimerRef.current = setTimeout(checkSilence, pollMs)
+
+    } catch {
+      alert('Microphone access denied')
+    }
+  }
 
   const stop = () => {
-    mediaRef.current?.stop()
-    mediaRef.current?.stream.getTracks().forEach(t => t.stop())
+    // FIX: debounce — prevent double-fire from simultaneous manual click + silence timer
+    if (stoppedRef.current) return
+    stoppedRef.current = true
+
+    // Cancel the silence poll loop immediately
+    if (pollTimerRef.current) {
+      clearTimeout(pollTimerRef.current)
+      pollTimerRef.current = null
+    }
+
+    // Close AudioContext
+    if (audioCtxRef.current) {
+      audioCtxRef.current.close().catch(() => {})
+      audioCtxRef.current = null
+    }
+
+    // Stop recorder + stream
+    if (mediaRef.current) {
+      if (mediaRef.current.state !== 'inactive') {
+        mediaRef.current.stop()
+      }
+      mediaRef.current.stream?.getTracks().forEach(t => t.stop())
+    }
+
     setState('processing')
   }
 
@@ -82,11 +153,14 @@ const start = async () => {
       try {
         const ar  = await speakText(spoken)
         const url = URL.createObjectURL(ar.data)
-        new Audio(url).play()
+        const audio = new Audio(url)
+        audio.onended = () => URL.revokeObjectURL(url)  // FIX: revoke URL after playback
+        audio.play()
       } catch {}
     } catch (err) {
       console.error('Voice error:', err)
     } finally {
+      mediaRef.current = null  // FIX: clear ref after stop
       setState('idle')
       setTimeout(() => setTranscript(''), 3000)
     }
