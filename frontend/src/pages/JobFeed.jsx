@@ -102,7 +102,7 @@ export default function JobFeed() {
   const hasMore = paginated.length < filtered.length
 
   return (
-    <div className="p-4 max-w-5xl mx-auto">
+    <div className="p-4 md:p-8 max-w-[1400px] mx-auto w-full">
 
       {/* Header */}
       <div className="flex items-start justify-between mb-6 gap-4">
@@ -153,8 +153,8 @@ export default function JobFeed() {
 
       {/* Grid */}
       {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[...Array(6)].map((_, i) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {[...Array(8)].map((_, i) => (
             <div key={i} className="h-56 skeleton rounded-2xl" />
           ))}
         </div>
@@ -166,7 +166,7 @@ export default function JobFeed() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {paginated.map(job => <JobCard key={job.id} job={job} />)}
           </div>
           {hasMore && (
