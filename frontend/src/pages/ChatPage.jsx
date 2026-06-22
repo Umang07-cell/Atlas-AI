@@ -3,9 +3,9 @@ import { motion } from 'framer-motion'
 import { sendChatMessage, getChatHistory, clearChatHistory } from '../api'
 import { Send, Trash2, Bot, Loader2, Sparkles } from 'lucide-react'
 const SUGGESTIONS = [
-  "How do I get my first job with no experience?",
+  "How do I get my first data analyst job with no experience?",
   "Review my LinkedIn headline for Data Science roles",
-  "What skills should I learn for AI/ML in 2026?",
+  "What skills should I learn for AI/ML in 2025?",
   "How to negotiate salary as a fresher in Pune?",
   "Which companies are hiring data analysts in Bangalore?",
   "How do I cold email a recruiter on LinkedIn?",
@@ -57,7 +57,7 @@ export default function ChatPage() {
   const userId    = parseInt(localStorage.getItem('atlas_uid'))
   useEffect(() => { loadHistory() }, [])
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: reduce ? 'instant' : 'smooth' })
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
   const loadHistory = async () => {
