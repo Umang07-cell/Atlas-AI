@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { tailorResume, getUid } from '../api'
 import { Wand2, Copy, Check, Download, FileText, ChevronRight, Sparkles, Zap } from 'lucide-react'
 import ATSMeter from '../components/ATSMeter'
-import { shouldReduceEffects } from '../utils/device'
 
 export default function ResumeStudio() {
   const [jd, setJd]         = useState('')
@@ -12,7 +11,6 @@ export default function ResumeStudio() {
   const [error, setError]   = useState('')
   const [tab, setTab]       = useState('resume')
   const [copied, setCopied] = useState(false)
-  const reduce = shouldReduceEffects()
 
   const analyze = async () => {
     if (!jd.trim()) return
@@ -55,7 +53,7 @@ export default function ResumeStudio() {
   return (
     <div className="p-4 sm:p-8 max-w-[1400px] mx-auto w-full">
       {/* Header */}
-      {reduce ? (
+      {false ? (
         <div className="mb-7">
           <p className="mono-label mb-1.5 flex items-center gap-1.5">
             <Sparkles size={10} className="text-indigo-400" /> ATS Optimizer
@@ -84,7 +82,7 @@ export default function ResumeStudio() {
 
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Left — JD input */}
-        {reduce ? (
+        {false ? (
           <div className="flex flex-col gap-4">
             <div className="card-elevated flex flex-col">
               <label className="text-xs font-semibold text-slate-300 mb-2 flex items-center gap-1.5">
@@ -159,7 +157,7 @@ export default function ResumeStudio() {
         )}
 
         {/* Right — results */}
-        {reduce ? (
+        {false ? (
           <div className="flex flex-col gap-4">
             <div className="card-elevated flex items-center justify-center py-8 relative overflow-hidden">
               {loading ? (
