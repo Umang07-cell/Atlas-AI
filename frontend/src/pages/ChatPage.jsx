@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { sendChatMessage, getChatHistory, clearChatHistory } from '../api'
 import { Send, Trash2, Bot, Loader2, Sparkles } from 'lucide-react'
 const SUGGESTIONS = [
-  "How do I get my first data analyst job with no experience?",
+  "How do I get my first job with no experience?",
   "Review my LinkedIn headline for Data Science roles",
   "What skills should I learn for AI/ML in 2025?",
   "How to negotiate salary as a fresher in Pune?",
