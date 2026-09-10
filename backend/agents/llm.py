@@ -4,7 +4,7 @@ from cerebras.cloud.sdk import Cerebras # type: ignore[import]
 
 # ── Groq (Chat, Resume, Jobs, Tasks, Voice) ───────────────────────────────────
 _groq_client = Groq(api_key=os.getenv("GROQ_API_KEY", ""))
-GROQ_MODEL = "llama-3.3-70b-versatile"
+GROQ_MODEL = "openai/gpt-oss-20b"
 
 # ── Cerebras (Interview — long sessions, 1M tokens/day free) ─────────────────
 _cerebras_client = Cerebras(api_key=os.getenv("CEREBRAS_API_KEY", ""))
